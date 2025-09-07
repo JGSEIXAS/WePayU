@@ -1,0 +1,9 @@
+FOLHA DE PAGAMENTO DO DIA 2005-02-28
+====================================
+Nome                      Salario Liquido Metodo
+-----------------------------------------------------------------
+Natalia do Valle                  1000,00 correios
+Regina Duarte                     1100,00 correios
+Flavia Alessandra                 1200,00 correios
+-----------------------------------------------------------------
+TOTAL FOLHA: 3300,00

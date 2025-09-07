@@ -1,0 +1,10 @@
+FOLHA DE PAGAMENTO DO DIA 2005-01-07
+====================================
+Nome                      Salario Liquido Metodo
+-----------------------------------------------------------------
+Paloma Duarte                      168,75 banco Banco do Brasil Ag. 1591-1 CC 51000-0
+Lavinia Vlasak                     201,78 banco Banco do Brasil Ag. 1591-1 CC 51001-1
+Claudia Abreu                      191,00 em maos
+Claudia Raia                        91,60 banco Banco do Brasil Ag. 1591-1 CC 51002-2
+-----------------------------------------------------------------
+TOTAL FOLHA: 653,13

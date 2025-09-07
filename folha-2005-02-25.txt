@@ -1,0 +1,10 @@
+FOLHA DE PAGAMENTO DO DIA 2005-02-25
+====================================
+Nome                      Salario Liquido Metodo
+-----------------------------------------------------------------
+Suzana Vieira                      678,31 correios
+Maite Proenca                      724,46 correios
+Deborah Secco                      600,00 correios
+Ana Paula Arosio                   646,15 correios
+-----------------------------------------------------------------
+TOTAL FOLHA: 2648,92
