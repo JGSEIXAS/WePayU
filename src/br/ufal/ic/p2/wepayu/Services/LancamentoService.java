@@ -40,7 +40,7 @@ public class LancamentoService extends br.ufal.ic.p2.wepayu.Services.BaseService
     }
 
     public void lancaTaxaServico(String idMembro, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
-        if (idMembro == null || idMembro.isEmpty()) throw new IdentificacaoNulaException();
+        if (idMembro == null || idMembro.isEmpty()) throw new MembroNuloException();
         if (!isDataValida(data)) throw new DataInvalidaException();
         double valor = validarValorPositivo(valorStr);
 

@@ -139,6 +139,7 @@ public class ConsultaService extends BaseService {
     }
 
     // Substitua o método inteiro por esta versão.
+    // br/ufal/ic/p2/wepayu/Services/ConsultaService.java
     public double calcularDeducoes(Empregado empregado, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         if (!empregado.isSindicalizado() || calcularSalarioBruto(empregado, dataFolha) <= 0) {
             return 0;
@@ -148,18 +149,13 @@ public class ConsultaService extends BaseService {
         double taxaSindicalDiaria = membro.getTaxaSindical();
         double taxaSindicalTotal = 0;
 
-        // **INÍCIO DA CORREÇÃO DA LÓGICA**
-        // A taxa sindical é fixa por tipo de pagamento, conforme o exemplo no us7.txt.
-        if (empregado instanceof EmpregadoHorista) {
-            taxaSindicalTotal = taxaSindicalDiaria * 7; // Sempre 7 dias para horistas
-        } else if (empregado instanceof EmpregadoComissionado) {
-            taxaSindicalTotal = taxaSindicalDiaria * 14; // Sempre 14 dias para comissionados
-        } else if (empregado instanceof EmpregadoAssalariado) {
-            taxaSindicalTotal = taxaSindicalDiaria * dataFolha.lengthOfMonth(); // Dias do mês para assalariados
+        if (empregado instanceof EmpregadoAssalariado) {
+            taxaSindicalTotal = taxaSindicalDiaria * dataFolha.lengthOfMonth();
+        } else {
+            long daysBetween = ChronoUnit.DAYS.between(empregado.getDataUltimoPagamento(), dataFolha);
+            taxaSindicalTotal = daysBetween * taxaSindicalDiaria;
         }
-        // **FIM DA CORREÇÃO DA LÓGICA**
 
-        // As taxas de serviço extra continuam a ser calculadas com base no período desde o último pagamento.
         String dataInicialStr = empregado.getDataUltimoPagamento().plusDays(1).format(DateTimeFormatter.ofPattern("d/M/yyyy"));
         String dataFinalStr = dataFolha.plusDays(1).format(DateTimeFormatter.ofPattern("d/M/yyyy"));
         double taxasServicoTotal = Double.parseDouble(getTaxasServico(empregado.getId(), dataInicialStr, dataFinalStr).replace(',', '.'));

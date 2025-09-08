@@ -2,9 +2,9 @@ package br.ufal.ic.p2.wepayu.Repository;
 
 import br.ufal.ic.p2.wepayu.models.Empregado;
 
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
+import java.beans.*;
 import java.io.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +37,16 @@ public class EmpregadoRepository {
 
     public void salvarDados() {
         try (XMLEncoder encoder = new XMLEncoder(new BufferedOutputStream(new FileOutputStream("empregados.xml")))) {
+            // Add this PersistenceDelegate to handle LocalDate objects
+            encoder.setPersistenceDelegate(LocalDate.class,
+                    new PersistenceDelegate() {
+                        @Override
+                        protected Expression instantiate(Object oldInstance, Encoder out) {
+                            LocalDate localDate = (LocalDate) oldInstance;
+                            return new Expression(localDate, LocalDate.class, "of",
+                                    new Object[]{localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth()});
+                        }
+                    });
             encoder.writeObject(this.empregados);
             encoder.writeObject(this.idCont);
         } catch (Exception e) {

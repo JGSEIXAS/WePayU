@@ -7,6 +7,20 @@
     <void property="comissao">
      <string>0,02</string>
     </void>
+    <void property="dataContratacao">
+     <object class="java.time.LocalDate" method="of">
+      <int>2005</int>
+      <int>1</int>
+      <int>1</int>
+     </object>
+    </void>
+    <void property="dataUltimoPagamento">
+     <object class="java.time.LocalDate" method="of">
+      <int>2004</int>
+      <int>12</int>
+      <int>31</int>
+     </object>
+    </void>
     <void property="endereco">
      <string>Rua dos Jooes, 333 - Campina Grande</string>
     </void>
