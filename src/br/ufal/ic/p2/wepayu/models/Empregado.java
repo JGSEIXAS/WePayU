@@ -14,6 +14,7 @@ public abstract class Empregado {
     private LocalDate dataUltimoPagamento;
 
     public Empregado() {}
+    public abstract Empregado clone();
 
     public Empregado(String id, String nome, String endereco, String tipo, String salario) {
         this.id = id;
@@ -60,4 +61,21 @@ public abstract class Empregado {
     public void setDataContratacao(LocalDate dataContratacao) { this.dataContratacao = dataContratacao; }
     public LocalDate getDataUltimoPagamento() { return dataUltimoPagamento; }
     public void setDataUltimoPagamento(LocalDate dataUltimoPagamento) { this.dataUltimoPagamento = dataUltimoPagamento; }
+    protected void copy(Empregado clone) {
+        clone.setId(this.id);
+        clone.setNome(this.nome);
+        clone.setEndereco(this.endereco);
+        clone.setTipo(this.tipo);
+        clone.setSalario(this.salario);
+
+        if (this.membroSindicato != null) {
+            clone.setMembroSindicato(this.membroSindicato.clone());
+        } else {
+            clone.setMembroSindicato(null);
+        }
+
+        clone.setMetodoPagamento(this.metodoPagamento); // Assumindo que MetodoPagamento não tem estado mutável
+        clone.setDataContratacao(this.dataContratacao);
+        clone.setDataUltimoPagamento(this.dataUltimoPagamento);
+    }
 }

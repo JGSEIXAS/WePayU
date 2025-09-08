@@ -40,4 +40,20 @@ public class EmpregadoComissionado extends Empregado {
     public void setComissao(String comissao) {
         this.comissao = comissao;
     }
+
+    @Override
+    public Empregado clone() {
+        EmpregadoComissionado cloned = new EmpregadoComissionado();
+        super.copy(cloned);
+        cloned.setComissao(this.getComissao());
+
+        // LÓGICA FINAL E CORRIGIDA: Cópia profunda do mapa de vendas.
+        Map<String, ResultadoVenda> clonedVendas = new HashMap<>();
+        for (Map.Entry<String, ResultadoVenda> entry : this.getVendas().entrySet()) {
+            clonedVendas.put(entry.getKey(), entry.getValue().clone());
+        }
+        cloned.setVendas(clonedVendas);
+
+        return cloned;
+    }
 }

@@ -5,10 +5,7 @@ import br.ufal.ic.p2.wepayu.models.Empregado;
 import java.beans.*;
 import java.io.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EmpregadoRepository {
 
@@ -80,5 +77,12 @@ public class EmpregadoRepository {
 
     public String getNextId() {
         return String.valueOf(++this.idCont);
+    }
+    public Map.Entry<Map<String, Empregado>, Integer> getState() {
+        return new AbstractMap.SimpleEntry<>(new HashMap<>(this.empregados), this.idCont);
+    }
+    public void setState(Map.Entry<Map<String, Empregado>, Integer> state) {
+        this.empregados = new HashMap<>(state.getKey());
+        this.idCont = state.getValue();
     }
 }

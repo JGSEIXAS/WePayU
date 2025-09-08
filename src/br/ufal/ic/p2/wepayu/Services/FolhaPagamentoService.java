@@ -11,44 +11,68 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class FolhaPagamentoService extends BaseService {
     private final ConsultaService consultaService;
+    private final CommandHistoryService commandHistoryService;
 
-    public FolhaPagamentoService(EmpregadoRepository repository, ConsultaService consultaService) {
+
+    public FolhaPagamentoService(EmpregadoRepository repository, ConsultaService consultaService, CommandHistoryService commandHistoryService) {
         super(repository);
         this.consultaService = consultaService;
+        this.commandHistoryService = commandHistoryService;
     }
 
+
     public void rodaFolha(String data, String saida) throws Exception {
-        LocalDate dataFolha = LocalDate.parse(data, DateTimeFormatter.ofPattern("d/M/yyyy"));
-        List<Empregado> empregados = repository.findAll();
+        // 1. Captura o estado do repositório ANTES de qualquer modificação.
+        Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(saida))) {
-            writer.println("FOLHA DE PAGAMENTO DO DIA " + dataFolha);
-            writer.println("====================================");
-            writer.println();
+        // 2. Define a ação "desfazer" (undo), que restaura o estado anterior.
+        Runnable undoAction = () -> repository.setState(estadoAnterior);
 
-            double totalHoristas = gerarRelatorioHoristas(writer, empregados, dataFolha);
-            double totalAssalariados = gerarRelatorioAssalariados(writer, empregados, dataFolha);
-            double totalComissionados = gerarRelatorioComissionados(writer, empregados, dataFolha);
+        // 3. Define a ação principal (o "comando") que será executada.
+        Runnable commandAction = () -> {
+            try {
+                LocalDate dataFolha = LocalDate.parse(data, DateTimeFormatter.ofPattern("d/M/yyyy"));
+                // Importante: Buscamos os empregados DENTRO da ação para usar o estado atual.
+                List<Empregado> empregados = repository.findAll();
 
-            double totalFolha = totalHoristas + totalAssalariados + totalComissionados;
-            writer.printf("TOTAL FOLHA: %.2f\n", totalFolha);
-        }
+                // A lógica de gerar o arquivo de saída permanece a mesma.
+                try (PrintWriter writer = new PrintWriter(new FileWriter(saida))) {
+                    writer.println("FOLHA DE PAGAMENTO DO DIA " + dataFolha);
+                    writer.println("====================================");
+                    writer.println();
 
-        // Update last payment date for all paid employees after generating the report
-        for (Empregado empregado : empregados) {
-            if (consultaService.isDiaDePagar(empregado, dataFolha)) {
-                double salarioBruto = consultaService.calcularSalarioBruto(empregado, dataFolha);
-                double descontos = consultaService.calcularDeducoes(empregado, dataFolha);
-                if ((salarioBruto - descontos) > 0) { // <-- CONDIÇÃO ADICIONADA
-                    empregado.setDataUltimoPagamento(dataFolha);
+                    double totalHoristas = gerarRelatorioHoristas(writer, empregados, dataFolha);
+                    double totalAssalariados = gerarRelatorioAssalariados(writer, empregados, dataFolha);
+                    double totalComissionados = gerarRelatorioComissionados(writer, empregados, dataFolha);
+
+                    double totalFolha = totalHoristas + totalAssalariados + totalComissionados;
+                    writer.printf("TOTAL FOLHA: %.2f\n", totalFolha);
                 }
-            }
-        }
 
+                // A lógica de atualizar a data do último pagamento também permanece.
+                // Esta é a principal modificação de estado que o "undo" reverterá.
+                for (Empregado empregado : empregados) {
+                    if (consultaService.isDiaDePagar(empregado, dataFolha)) {
+                        double salarioBruto = consultaService.calcularSalarioBruto(empregado, dataFolha);
+                        double descontos = consultaService.calcularDeducoes(empregado, dataFolha);
+                        if ((salarioBruto - descontos) > 0) {
+                            empregado.setDataUltimoPagamento(dataFolha);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Envolvemos as exceções para que possam ser tratadas pelo commandHistoryService se necessário.
+                throw new RuntimeException(e);
+            }
+        };
+
+        // 4. Executa o comando e regista a ação de "desfazer" no histórico.
+        commandHistoryService.execute(commandAction, undoAction);
     }
 
     private double gerarRelatorioHoristas(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {

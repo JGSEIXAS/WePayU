@@ -14,6 +14,11 @@ public class MembroSindicato {
         this.taxaSindical = taxaSindical;
         this.taxasDeServico = new HashMap<>();
     }
+    public MembroSindicato clone() {
+        MembroSindicato cloned = new MembroSindicato(this.idMembro, this.taxaSindical);
+        cloned.setTaxasDeServico(new HashMap<>(this.getTaxasDeServico()));
+        return cloned;
+    }
 
     public void lancaTaxaServico(TaxaServico taxa) {
         this.taxasDeServico.put(taxa.getData(), taxa);

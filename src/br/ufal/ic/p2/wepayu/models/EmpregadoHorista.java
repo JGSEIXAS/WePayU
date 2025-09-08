@@ -27,4 +27,12 @@ public class EmpregadoHorista extends Empregado {
     public void setCartoesDePonto(Map<String, CartaoDePonto> cartoesDePonto) {
         this.cartoesDePonto = cartoesDePonto;
     }
+
+    @Override
+    public Empregado clone() {
+        EmpregadoHorista cloned = new EmpregadoHorista(this.getId(), this.getNome(), this.getEndereco(), this.getTipo(), this.getSalario());
+        super.copy(cloned);
+        cloned.setCartoesDePonto(new HashMap<>(this.getCartoesDePonto()));
+        return cloned;
+    }
 }

@@ -2,10 +2,10 @@
 <java version="24.0.2" class="java.beans.XMLDecoder">
  <object class="java.util.HashMap">
   <void method="put">
-   <string>1</string>
-   <object class="br.ufal.ic.p2.wepayu.models.EmpregadoComissionado">
+   <string>2</string>
+   <object class="br.ufal.ic.p2.wepayu.models.EmpregadoComissionado" id="EmpregadoComissionado0">
     <void property="comissao">
-     <string>0,02</string>
+     <string>0,05</string>
     </void>
     <void property="dataContratacao">
      <object class="java.time.LocalDate" method="of">
@@ -22,25 +22,71 @@
      </object>
     </void>
     <void property="endereco">
-     <string>Rua dos Jooes, 333 - Campina Grande</string>
+     <string>Rua dos Bufoes, 333 - Campina Grande</string>
     </void>
     <void property="id">
-     <string>1</string>
+     <string>2</string>
+    </void>
+    <void property="membroSindicato">
+     <object class="br.ufal.ic.p2.wepayu.models.MembroSindicato" id="MembroSindicato0">
+      <void property="idMembro">
+       <string>s123</string>
+      </void>
+      <void property="taxaSindical">
+       <double>30.0</double>
+      </void>
+      <void property="taxasDeServico">
+       <void method="put">
+        <string>1/1/2005</string>
+        <object class="br.ufal.ic.p2.wepayu.models.TaxaServico">
+         <void property="data">
+          <string>1/1/2005</string>
+         </void>
+         <void property="valor">
+          <double>80.0</double>
+         </void>
+        </object>
+       </void>
+      </void>
+     </object>
     </void>
     <void property="metodoPagamento">
-     <object class="br.ufal.ic.p2.wepayu.models.EmMaos"/>
+     <object class="br.ufal.ic.p2.wepayu.models.Banco">
+      <void property="agencia">
+       <string>1591-1</string>
+      </void>
+      <void property="banco">
+       <string>Banco do Brasil</string>
+      </void>
+      <void property="contaCorrente">
+       <string>51000-0</string>
+      </void>
+     </object>
     </void>
     <void property="nome">
-     <string>Joao da Silva</string>
+     <string>Gaiato Vendedor</string>
     </void>
     <void property="salario">
-     <string>23,00</string>
+     <string>2300,00</string>
     </void>
     <void property="tipo">
      <string>comissionado</string>
     </void>
+    <void property="vendas">
+     <void method="put">
+      <string>1/1/2005</string>
+      <object class="br.ufal.ic.p2.wepayu.models.ResultadoVenda">
+       <void property="data">
+        <string>1/1/2005</string>
+       </void>
+       <void property="valor">
+        <double>800.0</double>
+       </void>
+      </object>
+     </void>
+    </void>
    </object>
   </void>
  </object>
- <int>1</int>
+ <int>0</int>
 </java>

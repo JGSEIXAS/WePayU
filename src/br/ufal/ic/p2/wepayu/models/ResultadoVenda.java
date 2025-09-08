@@ -12,6 +12,10 @@ public class ResultadoVenda {
         this.valor = valor;
     }
 
+    public ResultadoVenda clone() {
+        return new ResultadoVenda(this.data, this.valor);
+    }
+
     // Getters
     public String getData() {
         return data;
