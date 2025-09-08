@@ -5,7 +5,11 @@ import br.ufal.ic.p2.wepayu.models.Empregado;
 import java.beans.*;
 import java.io.*;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class EmpregadoRepository {
 
@@ -34,7 +38,6 @@ public class EmpregadoRepository {
 
     public void salvarDados() {
         try (XMLEncoder encoder = new XMLEncoder(new BufferedOutputStream(new FileOutputStream("empregados.xml")))) {
-            // Add this PersistenceDelegate to handle LocalDate objects
             encoder.setPersistenceDelegate(LocalDate.class,
                     new PersistenceDelegate() {
                         @Override
@@ -56,9 +59,6 @@ public class EmpregadoRepository {
         this.idCont = 0;
     }
 
-    // --- MÉTODOS DE ACESSO A DADOS (CRUD) ---
-    // --- ESTES SÃO OS MÉTODOS QUE ESTAVAM FALTANDO ---
-
     public Empregado findById(String id) {
         return this.empregados.get(id);
     }
@@ -78,11 +78,21 @@ public class EmpregadoRepository {
     public String getNextId() {
         return String.valueOf(++this.idCont);
     }
+
     public Map.Entry<Map<String, Empregado>, Integer> getState() {
-        return new AbstractMap.SimpleEntry<>(new HashMap<>(this.empregados), this.idCont);
+        Map<String, Empregado> empregadosCopiaProfunda = new HashMap<>();
+        for (Map.Entry<String, Empregado> entry : this.empregados.entrySet()) {
+            empregadosCopiaProfunda.put(entry.getKey(), entry.getValue().clone());
+        }
+        return new AbstractMap.SimpleEntry<>(empregadosCopiaProfunda, this.idCont);
     }
+
     public void setState(Map.Entry<Map<String, Empregado>, Integer> state) {
-        this.empregados = new HashMap<>(state.getKey());
+        Map<String, Empregado> deepCopiedMap = new HashMap<>();
+        for (Map.Entry<String, Empregado> entry : state.getKey().entrySet()) {
+            deepCopiedMap.put(entry.getKey(), entry.getValue().clone());
+        }
+        this.empregados = deepCopiedMap;
         this.idCont = state.getValue();
     }
 }

@@ -47,9 +47,9 @@ public class EmpregadoComissionado extends Empregado {
         super.copy(cloned);
         cloned.setComissao(this.getComissao());
 
-        // LÓGICA FINAL E CORRIGIDA: Cópia profunda do mapa de vendas.
+        // CORREÇÃO CRÍTICA: Executa uma cópia profunda do mapa de vendas.
         Map<String, ResultadoVenda> clonedVendas = new HashMap<>();
-        for (Map.Entry<String, ResultadoVenda> entry : this.getVendas().entrySet()) {
+        for (Map.Entry<String, ResultadoVenda> entry : this.vendas.entrySet()) {
             clonedVendas.put(entry.getKey(), entry.getValue().clone());
         }
         cloned.setVendas(clonedVendas);

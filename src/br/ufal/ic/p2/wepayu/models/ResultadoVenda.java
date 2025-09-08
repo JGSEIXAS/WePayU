@@ -12,11 +12,12 @@ public class ResultadoVenda {
         this.valor = valor;
     }
 
+    @Override
     public ResultadoVenda clone() {
         return new ResultadoVenda(this.data, this.valor);
     }
 
-    // Getters
+    // Getters e Setters
     public String getData() {
         return data;
     }
