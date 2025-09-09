@@ -1,9 +1,10 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EmpregadoHorista extends Empregado {
+public class EmpregadoHorista extends Empregado implements Serializable {
 
     private Map<String, CartaoDePonto> cartoesDePonto;
 
@@ -28,11 +29,25 @@ public class EmpregadoHorista extends Empregado {
         this.cartoesDePonto = cartoesDePonto;
     }
 
+    // Dentro da classe EmpregadoHorista
+
     @Override
     public Empregado clone() {
         EmpregadoHorista cloned = new EmpregadoHorista(this.getId(), this.getNome(), this.getEndereco(), this.getTipo(), this.getSalario());
         super.copy(cloned);
-        cloned.setCartoesDePonto(new HashMap<>(this.getCartoesDePonto()));
+
+        // --- Início da Cópia Profunda do Mapa de Cartões de Ponto ---
+        Map<String, CartaoDePonto> newCartoesMap = new HashMap<>();
+        if (this.cartoesDePonto != null) {
+            for (Map.Entry<String, CartaoDePonto> entry : this.cartoesDePonto.entrySet()) {
+                CartaoDePonto originalCartao = entry.getValue();
+                // Cria nova instância de CartaoDePonto.
+                newCartoesMap.put(entry.getKey(), new CartaoDePonto(originalCartao.getData(), originalCartao.getHoras()));
+            }
+        }
+        cloned.setCartoesDePonto(newCartoesMap);
+        // --- Fim da Cópia Profunda ---
+
         return cloned;
     }
 }

@@ -29,13 +29,12 @@ public class CommandHistoryService {
 
         try {
             command.execute();
-            undoStack.push(command);
+            undoStack.push(command); // Apenas adiciona à pilha se a execução for bem-sucedida
             redoStack.clear();
         } catch (Exception e) {
             // LÓGICA CORRIGIDA E FINAL
             Throwable cause = e.getCause();
             if (e instanceof RuntimeException && cause != null) {
-                // Se a causa for uma das nossas exceções, relança a causa original.
                 if (cause instanceof ValidacaoException) {
                     throw (ValidacaoException) cause;
                 }
@@ -43,7 +42,6 @@ public class CommandHistoryService {
                     throw (EmpregadoNaoExisteException) cause;
                 }
             }
-            // Se for outro tipo de erro, relança a exceção que foi apanhada.
             throw e;
         }
     }
@@ -53,8 +51,8 @@ public class CommandHistoryService {
             throw new ValidacaoException("Nao ha comando a desfazer.");
         }
         Command command = undoStack.pop();
-        redoStack.push(command);
         command.undo();
+        redoStack.push(command);
     }
 
     public void redo() throws ValidacaoException {
@@ -62,7 +60,7 @@ public class CommandHistoryService {
             throw new ValidacaoException("Nao ha comando a refazer.");
         }
         Command command = redoStack.pop();
-        undoStack.push(command);
         command.execute();
+        undoStack.push(command);
     }
 }

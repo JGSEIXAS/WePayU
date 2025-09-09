@@ -1,4 +1,5 @@
 package br.ufal.ic.p2.wepayu.models;
+
 public class Banco extends MetodoPagamento {
     private String banco;
     private String agencia;
@@ -9,6 +10,12 @@ public class Banco extends MetodoPagamento {
         this.banco = banco;
         this.agencia = agencia;
         this.contaCorrente = contaCorrente;
+    }
+
+    // Método clone para garantir cópia profunda
+    @Override
+    public Banco clone() {
+        return new Banco(this.banco, this.agencia, this.contaCorrente);
     }
 
     // Getters e Setters

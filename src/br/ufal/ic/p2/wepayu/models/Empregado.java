@@ -26,7 +26,7 @@ public abstract class Empregado {
         this.metodoPagamento = new EmMaos();
 
         if ("horista".equals(tipo)) {
-            this.dataContratacao = null; // Será definido no primeiro cartão
+            this.dataContratacao = null;
         } else {
             this.dataContratacao = LocalDate.of(2005, 1, 1);
         }
@@ -36,7 +36,7 @@ public abstract class Empregado {
                 : LocalDate.of(2004, 12, 31);
     }
 
-    // --- Getters e Setters ---
+    // Getters e Setters (permanecem os mesmos)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getNome() { return nome; }
@@ -61,6 +61,10 @@ public abstract class Empregado {
     public void setDataContratacao(LocalDate dataContratacao) { this.dataContratacao = dataContratacao; }
     public LocalDate getDataUltimoPagamento() { return dataUltimoPagamento; }
     public void setDataUltimoPagamento(LocalDate dataUltimoPagamento) { this.dataUltimoPagamento = dataUltimoPagamento; }
+
+    /**
+     * CORREÇÃO FINAL: Garante a cópia profunda de todos os campos aninhados.
+     */
     protected void copy(Empregado clone) {
         clone.setId(this.id);
         clone.setNome(this.nome);
@@ -74,7 +78,16 @@ public abstract class Empregado {
             clone.setMembroSindicato(null);
         }
 
-        clone.setMetodoPagamento(this.metodoPagamento); // Assumindo que MetodoPagamento não tem estado mutável
+        if (this.metodoPagamento != null) {
+            if (this.metodoPagamento instanceof Banco) {
+                clone.setMetodoPagamento(((Banco) this.metodoPagamento).clone());
+            } else if (this.metodoPagamento instanceof Correios) {
+                clone.setMetodoPagamento(new Correios());
+            } else if (this.metodoPagamento instanceof EmMaos) {
+                clone.setMetodoPagamento(new EmMaos());
+            }
+        }
+
         clone.setDataContratacao(this.dataContratacao);
         clone.setDataUltimoPagamento(this.dataUltimoPagamento);
     }

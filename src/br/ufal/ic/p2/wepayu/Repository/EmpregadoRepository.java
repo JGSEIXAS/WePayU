@@ -1,7 +1,6 @@
 package br.ufal.ic.p2.wepayu.Repository;
 
 import br.ufal.ic.p2.wepayu.models.Empregado;
-
 import java.beans.*;
 import java.io.*;
 import java.time.LocalDate;

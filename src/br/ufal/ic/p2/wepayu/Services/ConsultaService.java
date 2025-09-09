@@ -83,7 +83,7 @@ public class ConsultaService extends BaseService {
         LocalDate data = LocalDate.parse(dataStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
         LocalDate dataInicial = LocalDate.parse(dataInicialStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
         LocalDate dataFinal = LocalDate.parse(dataFinalStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
-        return !data.isBefore(dataInicial) && data.isBefore(dataFinal);
+        return !data.isBefore(dataInicial) && !data.isAfter(dataFinal);
     }
 
     private void validarIntervaloDeDatas(String dataInicialStr, String dataFinalStr) throws ValidacaoException {
@@ -138,8 +138,6 @@ public class ConsultaService extends BaseService {
         return 0;
     }
 
-    // Substitua o método inteiro por esta versão.
-    // br/ufal/ic/p2/wepayu/Services/ConsultaService.java
     public double calcularDeducoes(Empregado empregado, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         if (!empregado.isSindicalizado() || calcularSalarioBruto(empregado, dataFolha) <= 0) {
             return 0;

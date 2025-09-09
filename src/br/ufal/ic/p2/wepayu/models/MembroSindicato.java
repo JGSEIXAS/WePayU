@@ -8,15 +8,22 @@ public class MembroSindicato {
     private double taxaSindical;
     private Map<String, TaxaServico> taxasDeServico;
 
-    public MembroSindicato() { this.taxasDeServico = new HashMap<>(); } // Construtor para persistência
+    public MembroSindicato() { this.taxasDeServico = new HashMap<>(); }
     public MembroSindicato(String idMembro, double taxaSindical) {
         this.idMembro = idMembro;
         this.taxaSindical = taxaSindical;
         this.taxasDeServico = new HashMap<>();
     }
+
     public MembroSindicato clone() {
         MembroSindicato cloned = new MembroSindicato(this.idMembro, this.taxaSindical);
-        cloned.setTaxasDeServico(new HashMap<>(this.getTaxasDeServico()));
+        // Cópia profunda do mapa de taxas de serviço
+        Map<String, TaxaServico> taxasCopia = new HashMap<>();
+        for (Map.Entry<String, TaxaServico> entry : this.taxasDeServico.entrySet()) {
+            TaxaServico original = entry.getValue();
+            taxasCopia.put(entry.getKey(), new TaxaServico(original.getData(), original.getValor()));
+        }
+        cloned.setTaxasDeServico(taxasCopia);
         return cloned;
     }
 

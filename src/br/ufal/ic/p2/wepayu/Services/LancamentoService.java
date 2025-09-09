@@ -5,6 +5,7 @@ import br.ufal.ic.p2.wepayu.models.*;
 import br.ufal.ic.p2.wepayu.Repository.EmpregadoRepository;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class LancamentoService extends BaseService {
     private final CommandHistoryService commandHistoryService;
@@ -15,22 +16,26 @@ public class LancamentoService extends BaseService {
     }
 
     public void lancaCartao(String id, String data, String horasStr) throws ValidacaoException, EmpregadoNaoExisteException {
-        Empregado empregadoOriginal = getEmpregadoValido(id, EmpregadoHorista.class).clone();
-        Runnable undoAction = () -> repository.save(empregadoOriginal);
+        getEmpregadoValido(id, EmpregadoHorista.class); // Validação prévia
+        Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
+        Runnable undoAction = () -> repository.setState(estadoAnterior);
 
         Runnable commandAction = () -> {
             try {
-                EmpregadoHorista horista = (EmpregadoHorista) getEmpregadoValido(id, EmpregadoHorista.class);
+                EmpregadoHorista original = (EmpregadoHorista) repository.findById(id);
+                EmpregadoHorista modificado = (EmpregadoHorista) original.clone();
+
                 if (!isDataValida(data)) throw new DataInvalidaException();
                 double horas = validarHoras(horasStr);
 
-                if (horista.getDataContratacao() == null) {
+                if (modificado.getDataContratacao() == null) {
                     LocalDate dataContratacao = LocalDate.parse(data, DateTimeFormatter.ofPattern("d/M/yyyy"));
-                    horista.setDataContratacao(dataContratacao);
-                    horista.setDataUltimoPagamento(dataContratacao.minusDays(1));
+                    modificado.setDataContratacao(dataContratacao);
+                    modificado.setDataUltimoPagamento(dataContratacao.minusDays(1));
                 }
                 CartaoDePonto novoCartao = new CartaoDePonto(data, horas);
-                horista.lancaCartao(novoCartao);
+                modificado.lancaCartao(novoCartao);
+                repository.save(modificado);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -39,16 +44,20 @@ public class LancamentoService extends BaseService {
     }
 
     public void lancaVenda(String id, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
-        Empregado empregadoOriginal = getEmpregadoValido(id, EmpregadoComissionado.class).clone();
-        Runnable undoAction = () -> repository.save(empregadoOriginal);
+        getEmpregadoValido(id, EmpregadoComissionado.class); // Validação prévia
+        Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
+        Runnable undoAction = () -> repository.setState(estadoAnterior);
 
         Runnable commandAction = () -> {
             try {
-                EmpregadoComissionado comissionado = (EmpregadoComissionado) getEmpregadoValido(id, EmpregadoComissionado.class);
+                EmpregadoComissionado original = (EmpregadoComissionado) repository.findById(id);
+                EmpregadoComissionado modificado = (EmpregadoComissionado) original.clone();
+
                 if (!isDataValida(data)) throw new DataInvalidaException();
                 double valor = validarValorPositivo(valorStr);
                 ResultadoVenda novaVenda = new ResultadoVenda(data, valor);
-                comissionado.lancaVenda(novaVenda);
+                modificado.lancaVenda(novaVenda);
+                repository.save(modificado);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -57,27 +66,29 @@ public class LancamentoService extends BaseService {
     }
 
     public void lancaTaxaServico(String idMembro, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
-        Empregado empregadoAlvo = null;
-        for (Empregado e : repository.findAll()) {
-            if (e.isSindicalizado() && e.getMembroSindicato().getIdMembro().equals(idMembro)) {
-                empregadoAlvo = e;
-                break;
-            }
-        }
-        if (empregadoAlvo == null) throw new MembroNaoExisteException();
-
-        Empregado empregadoOriginal = empregadoAlvo.clone();
-        Runnable undoAction = () -> repository.save(empregadoOriginal);
+        Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
+        Runnable undoAction = () -> repository.setState(estadoAnterior);
 
         Runnable commandAction = () -> {
             try {
-                Empregado empregadoAtualizado = repository.findById(empregadoOriginal.getId());
+                Empregado empregadoAlvo = null;
+                for (Empregado e : repository.findAll()) {
+                    if (e.isSindicalizado() && e.getMembroSindicato().getIdMembro().equals(idMembro)) {
+                        empregadoAlvo = e;
+                        break;
+                    }
+                }
+                if (empregadoAlvo == null) throw new MembroNaoExisteException();
+
+                Empregado modificado = empregadoAlvo.clone();
+
                 if (idMembro == null || idMembro.isEmpty()) throw new MembroNuloException();
                 if (!isDataValida(data)) throw new DataInvalidaException();
                 double valor = validarValorPositivo(valorStr);
 
                 TaxaServico novaTaxa = new TaxaServico(data, valor);
-                empregadoAtualizado.getMembroSindicato().lancaTaxaServico(novaTaxa);
+                modificado.getMembroSindicato().lancaTaxaServico(novaTaxa);
+                repository.save(modificado);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
