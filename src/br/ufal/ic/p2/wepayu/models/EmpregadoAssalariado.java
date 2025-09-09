@@ -1,6 +1,8 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import br.ufal.ic.p2.wepayu.Services.ConsultaService;
 import java.io.Serializable;
+import java.time.LocalDate;
 
 public class EmpregadoAssalariado extends Empregado implements Serializable {
 
@@ -9,6 +11,11 @@ public class EmpregadoAssalariado extends Empregado implements Serializable {
 
     public EmpregadoAssalariado(String id, String nome, String endereco, String tipo, String salario) {
         super(id, nome, endereco, tipo, salario);
+    }
+
+    @Override
+    public double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) {
+        return Double.parseDouble(getSalarioSemFormato().replace(',', '.'));
     }
 
     @Override

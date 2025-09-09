@@ -1,5 +1,10 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import br.ufal.ic.p2.wepayu.Exception.EmpregadoNaoExisteException;
+import br.ufal.ic.p2.wepayu.Exception.ValidacaoException;
+import br.ufal.ic.p2.wepayu.Services.ConsultaService;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +20,20 @@ public class EmpregadoComissionado extends Empregado {
         super(id, nome, endereco, tipo, salario);
         this.comissao = comissao;
         this.vendas = new HashMap<>();
+    }
+
+    @Override
+    public double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) throws ValidacaoException, EmpregadoNaoExisteException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+        String dataInicialStr = getDataUltimoPagamento().plusDays(1).format(formatter);
+        String dataFinalStr = dataFolha.plusDays(1).format(formatter);
+
+        double salarioFixo = consultaService.getSalarioFixoComissionado(this);
+        double vendas = Double.parseDouble(consultaService.getVendasRealizadas(getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
+        double comissao = consultaService.getComissaoSobreVendas(this, vendas);
+
+        double salario = salarioFixo + comissao;
+        return Math.floor((salario * 100) + 1e-9) / 100.0;
     }
 
     public void lancaVenda(ResultadoVenda venda) {
@@ -46,14 +65,11 @@ public class EmpregadoComissionado extends Empregado {
         EmpregadoComissionado cloned = new EmpregadoComissionado();
         super.copy(cloned);
         cloned.setComissao(this.getComissao());
-
-        // Cópia profunda do mapa de vendas
         Map<String, ResultadoVenda> clonedVendas = new HashMap<>();
         for (Map.Entry<String, ResultadoVenda> entry : this.vendas.entrySet()) {
             clonedVendas.put(entry.getKey(), entry.getValue().clone());
         }
         cloned.setVendas(clonedVendas);
-
         return cloned;
     }
 }

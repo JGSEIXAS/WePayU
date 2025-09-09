@@ -1,8 +1,12 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import br.ufal.ic.p2.wepayu.Exception.EmpregadoNaoExisteException;
+import br.ufal.ic.p2.wepayu.Exception.ValidacaoException;
+import br.ufal.ic.p2.wepayu.Services.ConsultaService;
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public abstract class Empregado {
+public abstract class Empregado implements Serializable {
     private String id;
     private String nome;
     private String endereco;
@@ -36,6 +40,10 @@ public abstract class Empregado {
                 : LocalDate.of(2004, 12, 31);
     }
 
+    // **CORREÇÃO ADICIONADA AQUI**
+    // Adiciona o método abstrato que estava faltando.
+    public abstract double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) throws ValidacaoException, EmpregadoNaoExisteException;
+
     // Getters e Setters (permanecem os mesmos)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -63,7 +71,7 @@ public abstract class Empregado {
     public void setDataUltimoPagamento(LocalDate dataUltimoPagamento) { this.dataUltimoPagamento = dataUltimoPagamento; }
 
     /**
-     * CORREÇÃO FINAL: Garante a cópia profunda de todos os campos aninhados.
+     * Garante a cópia profunda de todos os campos aninhados.
      */
     protected void copy(Empregado clone) {
         clone.setId(this.id);

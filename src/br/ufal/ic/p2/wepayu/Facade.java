@@ -1,5 +1,6 @@
 package br.ufal.ic.p2.wepayu;
 
+import br.ufal.ic.p2.wepayu.Exception.EmpregadoNaoEncontradoException;
 import br.ufal.ic.p2.wepayu.Exception.EmpregadoNaoExisteException;
 import br.ufal.ic.p2.wepayu.Exception.ValidacaoException;
 import br.ufal.ic.p2.wepayu.Repository.EmpregadoRepository;
@@ -64,11 +65,10 @@ public class Facade {
         empregadoService.alteraEmpregado(emp, atributo, valor, idSindicato, taxaSindical);
     }
 
-    public void alteraEmpregado(String emp, String atributo, String valor, String comissaoOuSalario) throws ValidacaoException, EmpregadoNaoExisteException {
+    public void alteraEmpregado(String emp, String atributo, String valor, String salario) throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
-        empregadoService.alteraEmpregado(emp, atributo, valor, comissaoOuSalario);
+        empregadoService.alteraEmpregado(emp, atributo, valor, salario);
     }
-
     public void alteraEmpregado(String emp, String atributo, String valor1, String banco, String agencia, String contaCorrente) throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
         empregadoService.alteraEmpregado(emp, atributo, valor1, banco, agencia, contaCorrente);
@@ -80,7 +80,7 @@ public class Facade {
         return empregadoService.getAtributoEmpregado(emp, atributo);
     }
 
-    public String getEmpregadoPorNome(String nome, int indice) throws EmpregadoNaoExisteException, ValidacaoException {
+    public String getEmpregadoPorNome(String nome, int indice) throws EmpregadoNaoExisteException, ValidacaoException, EmpregadoNaoEncontradoException {
         verificarSistemaEncerrado();
         return empregadoService.getEmpregadoPorNome(nome, indice);
     }

@@ -6,9 +6,6 @@ import br.ufal.ic.p2.wepayu.models.EmpregadoComissionado;
 import br.ufal.ic.p2.wepayu.models.EmpregadoHorista;
 import br.ufal.ic.p2.wepayu.Repository.EmpregadoRepository;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-
 // Classe base abstrata para compartilhar o repositório e validações comuns
 public abstract class BaseService {
     protected final EmpregadoRepository repository;
@@ -20,7 +17,7 @@ public abstract class BaseService {
     protected Empregado getEmpregadoValido(String id) throws ValidacaoException, EmpregadoNaoExisteException {
         if (id == null || id.isEmpty()) throw new IdentificacaoNulaException();
         Empregado e = repository.findById(id);
-        if (e == null) throw new EmpregadoNaoExisteException("Empregado nao existe.");
+        if (e == null) throw new EmpregadoNaoExisteException();
         return e;
     }
 

@@ -16,7 +16,7 @@ public class LancamentoService extends BaseService {
     }
 
     public void lancaCartao(String id, String data, String horasStr) throws ValidacaoException, EmpregadoNaoExisteException {
-        getEmpregadoValido(id, EmpregadoHorista.class); // Validação prévia
+        getEmpregadoValido(id, EmpregadoHorista.class);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
 
@@ -24,10 +24,8 @@ public class LancamentoService extends BaseService {
             try {
                 EmpregadoHorista original = (EmpregadoHorista) repository.findById(id);
                 EmpregadoHorista modificado = (EmpregadoHorista) original.clone();
-
                 if (!isDataValida(data)) throw new DataInvalidaException();
                 double horas = validarHoras(horasStr);
-
                 if (modificado.getDataContratacao() == null) {
                     LocalDate dataContratacao = LocalDate.parse(data, DateTimeFormatter.ofPattern("d/M/yyyy"));
                     modificado.setDataContratacao(dataContratacao);
@@ -44,7 +42,7 @@ public class LancamentoService extends BaseService {
     }
 
     public void lancaVenda(String id, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
-        getEmpregadoValido(id, EmpregadoComissionado.class); // Validação prévia
+        getEmpregadoValido(id, EmpregadoComissionado.class);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
 
@@ -52,7 +50,6 @@ public class LancamentoService extends BaseService {
             try {
                 EmpregadoComissionado original = (EmpregadoComissionado) repository.findById(id);
                 EmpregadoComissionado modificado = (EmpregadoComissionado) original.clone();
-
                 if (!isDataValida(data)) throw new DataInvalidaException();
                 double valor = validarValorPositivo(valorStr);
                 ResultadoVenda novaVenda = new ResultadoVenda(data, valor);
@@ -66,6 +63,7 @@ public class LancamentoService extends BaseService {
     }
 
     public void lancaTaxaServico(String idMembro, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
+        if (idMembro == null || idMembro.isEmpty()) throw new MembroNuloException();
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
 
@@ -79,13 +77,9 @@ public class LancamentoService extends BaseService {
                     }
                 }
                 if (empregadoAlvo == null) throw new MembroNaoExisteException();
-
                 Empregado modificado = empregadoAlvo.clone();
-
-                if (idMembro == null || idMembro.isEmpty()) throw new MembroNuloException();
                 if (!isDataValida(data)) throw new DataInvalidaException();
                 double valor = validarValorPositivo(valorStr);
-
                 TaxaServico novaTaxa = new TaxaServico(data, valor);
                 modificado.getMembroSindicato().lancaTaxaServico(novaTaxa);
                 repository.save(modificado);
@@ -102,7 +96,7 @@ public class LancamentoService extends BaseService {
             if (horas <= 0) throw new HorasPositivasException();
             return horas;
         } catch (NumberFormatException e) {
-            throw new ValidacaoException("Horas deve ser um valor numerico.");
+            throw new HorasNumericasException();
         }
     }
 
@@ -112,7 +106,7 @@ public class LancamentoService extends BaseService {
             if (valor <= 0) throw new ValorPositivoException();
             return valor;
         } catch (NumberFormatException e) {
-            throw new ValidacaoException("Valor deve ser numerico.");
+            throw new ValorNumericoException();
         }
     }
 }

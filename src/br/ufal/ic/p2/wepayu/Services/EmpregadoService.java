@@ -7,13 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Versão corrigida do EmpregadoService.
- * A estratégia de undo foi padronizada para salvar e restaurar
- * um snapshot completo do repositório para TODAS as operações
- * que alteram o estado, garantindo a integridade e resolvendo
- * problemas de cópia superficial.
- */
 public class EmpregadoService extends BaseService {
     private final CommandHistoryService commandHistoryService;
 
@@ -27,16 +20,10 @@ public class EmpregadoService extends BaseService {
         validarCamposBase(nome, endereco, salario);
         if ("comissionado".equals(tipo)) throw new TipoNaoAplicavelException();
         if (!"horista".equals(tipo) && !"assalariado".equals(tipo)) throw new TipoInvalidoException();
-
-        // Salva o estado ANTES da ação
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         String id = repository.getNextId();
-        Empregado e = "horista".equals(tipo)
-                ? new EmpregadoHorista(id, nome, endereco, tipo, salario)
-                : new EmpregadoAssalariado(id, nome, endereco, tipo, salario);
-
+        Empregado e = EmpregadoFactory.criarEmpregado(tipo, id, nome, endereco, salario);
         Runnable commandAction = () -> repository.save(e);
         commandHistoryService.execute(commandAction, undoAction);
         return id;
@@ -46,36 +33,31 @@ public class EmpregadoService extends BaseService {
         validarCamposBase(nome, endereco, salario);
         validarComissao(comissao);
         if (!"comissionado".equals(tipo)) throw new TipoNaoAplicavelException();
-
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         String id = repository.getNextId();
-        Empregado e = new EmpregadoComissionado(id, nome, endereco, tipo, salario, comissao);
-
+        Empregado e = EmpregadoFactory.criarEmpregado(tipo, id, nome, endereco, salario, comissao);
         Runnable commandAction = () -> repository.save(e);
         commandHistoryService.execute(commandAction, undoAction);
         return id;
     }
 
     public void removerEmpregado(String id) throws ValidacaoException, EmpregadoNaoExisteException {
-        getEmpregadoValido(id); // Valida se o empregado existe antes de salvar o estado
+        getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         Runnable commandAction = () -> repository.deleteById(id);
         commandHistoryService.execute(commandAction, undoAction);
     }
 
-    // --- MÉTODOS DE ALTERAÇÃO (TODOS USANDO A ESTRATÉGIA DE SNAPSHOT) ---
+    // --- MÉTODOS DE ALTERAÇÃO ---
     public void alteraEmpregado(String id, String atributo, String valor) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         Runnable commandAction = () -> {
             try {
-                Empregado empregado = repository.findById(id); // Busca o empregado no estado atual
+                Empregado empregado = repository.findById(id);
                 switch (atributo.toLowerCase()) {
                     case "nome":
                         if (valor == null || valor.isEmpty()) throw new NomeNuloException();
@@ -89,6 +71,9 @@ public class EmpregadoService extends BaseService {
                         validarSalario(valor);
                         empregado.setSalario(valor);
                         break;
+                    case "tipo":
+                        alterarTipo(id, valor, null, null);
+                        break;
                     case "comissao":
                         if (!(empregado instanceof EmpregadoComissionado)) throw new EmpregadoNaoComissionadoException();
                         validarComissao(valor);
@@ -97,17 +82,13 @@ public class EmpregadoService extends BaseService {
                     case "metodopagamento":
                         if ("emmaos".equalsIgnoreCase(valor)) empregado.setMetodoPagamento(new EmMaos());
                         else if ("correios".equalsIgnoreCase(valor)) empregado.setMetodoPagamento(new Correios());
-                        else if ("banco".equalsIgnoreCase(valor)) throw new ValidacaoException("Dados bancarios devem ser fornecidos.");
-                        else throw new ValidacaoException("Metodo de pagamento invalido.");
+                        else if ("banco".equalsIgnoreCase(valor)) throw new DadosBancariosDevemSerFornecidosException();
+                        else throw new MetodoPagamentoInvalidoException();
                         break;
                     case "sindicalizado":
-                        if ("false".equalsIgnoreCase(valor)) {
-                            empregado.setMembroSindicato(null);
-                        } else if ("true".equalsIgnoreCase(valor)) {
-                            throw new ValidacaoException("Identificacao do sindicato nao pode ser nula.");
-                        } else {
-                            throw new ValidacaoException("Valor deve ser true ou false.");
-                        }
+                        if ("false".equalsIgnoreCase(valor)) empregado.setMembroSindicato(null);
+                        else if ("true".equalsIgnoreCase(valor)) throw new IdSindicatoNuloException();
+                        else throw new ValorTrueOrFalseException();
                         break;
                     default:
                         throw new AtributoNaoExisteException();
@@ -123,14 +104,13 @@ public class EmpregadoService extends BaseService {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         Runnable commandAction = () -> {
             try {
                 Empregado empregado = repository.findById(id);
                 if ("metodopagamento".equalsIgnoreCase(atributo) && "banco".equalsIgnoreCase(valor)) {
-                    if (banco == null || banco.isEmpty()) throw new ValidacaoException("Banco nao pode ser nulo.");
-                    if (agencia == null || agencia.isEmpty()) throw new ValidacaoException("Agencia nao pode ser nulo.");
-                    if (contaCorrente == null || contaCorrente.isEmpty()) throw new ValidacaoException("Conta corrente nao pode ser nulo.");
+                    if (banco == null || banco.isEmpty()) throw new BancoNuloException();
+                    if (agencia == null || agencia.isEmpty()) throw new AgenciaNulaException();
+                    if (contaCorrente == null || contaCorrente.isEmpty()) throw new ContaCorrenteNulaException();
                     empregado.setMetodoPagamento(new Banco(banco, agencia, contaCorrente));
                 } else {
                     throw new AtributoNaoExisteException();
@@ -146,25 +126,26 @@ public class EmpregadoService extends BaseService {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         Runnable commandAction = () -> {
             try {
                 Empregado empregado = repository.findById(id);
                 if (!"sindicalizado".equalsIgnoreCase(atributo)) throw new AtributoNaoExisteException();
-
                 if (status) {
-                    if (idSindicato == null || idSindicato.isEmpty()) throw new ValidacaoException("Identificacao do sindicato nao pode ser nula.");
-                    if (taxaSindical == null || taxaSindical.isEmpty()) throw new ValidacaoException("Taxa sindical nao pode ser nula.");
-
+                    if (idSindicato == null || idSindicato.isEmpty()) throw new IdSindicatoNuloException();
+                    if (taxaSindical == null || taxaSindical.isEmpty()) throw new TaxaSindicalNulaException();
                     for (Empregado e : repository.findAll()) {
                         if (e.getId().equals(id)) continue;
                         if (e.isSindicalizado() && e.getMembroSindicato().getIdMembro().equals(idSindicato)) {
-                            throw new ValidacaoException("Ha outro empregado com esta identificacao de sindicato");
+                            throw new SindicatoIdJaExisteException();
                         }
                     }
-                    double taxa = Double.parseDouble(taxaSindical.replace(',', '.'));
-                    if (taxa < 0) throw new ValidacaoException("Taxa sindical deve ser nao-negativa.");
-                    empregado.setMembroSindicato(new MembroSindicato(idSindicato, taxa));
+                    try {
+                        double taxa = Double.parseDouble(taxaSindical.replace(',', '.'));
+                        if (taxa < 0) throw new TaxaSindicalNaoNegativaException();
+                        empregado.setMembroSindicato(new MembroSindicato(idSindicato, taxa));
+                    } catch (NumberFormatException e) {
+                        throw new TaxaSindicalNumericaException();
+                    }
                 } else {
                     empregado.setMembroSindicato(null);
                 }
@@ -179,11 +160,14 @@ public class EmpregadoService extends BaseService {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
-
         Runnable commandAction = () -> {
             try {
                 if (!"tipo".equalsIgnoreCase(atributo)) throw new AtributoNaoExisteException();
-                alterarTipo(id, tipo, comissaoOuSalario, comissaoOuSalario);
+                if ("comissionado".equalsIgnoreCase(tipo)) {
+                    alterarTipo(id, tipo, comissaoOuSalario, null);
+                } else {
+                    alterarTipo(id, tipo, null, comissaoOuSalario);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -191,7 +175,7 @@ public class EmpregadoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
-    // --- MÉTODOS DE CONSULTA (Não precisam de undo/redo) ---
+    // --- MÉTODOS DE CONSULTA ---
     public String getAtributoEmpregado(String id, String atributo) throws ValidacaoException, EmpregadoNaoExisteException {
         Empregado empregado = getEmpregadoValido(id);
         return switch (atributo.toLowerCase()) {
@@ -220,7 +204,7 @@ public class EmpregadoService extends BaseService {
                         default -> "";
                     };
                 }
-                throw new ValidacaoException("Empregado nao recebe em banco.");
+                throw new EmpregadoNaoRecebeEmBancoException();
             }
             case "idsindicato", "taxasindical" -> {
                 if (empregado.isSindicalizado()) {
@@ -231,17 +215,23 @@ public class EmpregadoService extends BaseService {
                         default -> "";
                     };
                 }
-                throw new ValidacaoException("Empregado nao eh sindicalizado.");
+                throw new EmpregadoNaoSindicalizadoException();
             }
             default -> throw new AtributoNaoExisteException();
         };
     }
 
-    public String getEmpregadoPorNome(String nome, int indice) throws EmpregadoNaoExisteException {
+    public String getEmpregadoPorNome(String nome, int indice) throws EmpregadoNaoExisteException, EmpregadoNaoEncontradoException {
         List<Empregado> empregadosEncontrados = new ArrayList<>();
-        for (Empregado e : repository.findAll()) if (e.getNome().equals(nome)) empregadosEncontrados.add(e);
+        for (Empregado e : repository.findAll()) {
+            if (e.getNome().equals(nome)) {
+                empregadosEncontrados.add(e);
+            }
+        }
         int index = indice - 1;
-        if (empregadosEncontrados.isEmpty() || index < 0 || index >= empregadosEncontrados.size()) throw new EmpregadoNaoExisteException("Nao ha empregado com esse nome.");
+        if (empregadosEncontrados.isEmpty() || index < 0 || index >= empregadosEncontrados.size()) {
+            throw new EmpregadoNaoEncontradoException();
+        }
         return empregadosEncontrados.get(index).getId();
     }
 
@@ -252,24 +242,24 @@ public class EmpregadoService extends BaseService {
     // --- MÉTODOS PRIVADOS ---
     private void alterarTipo(String id, String novoTipo, String comissao, String novoSalario) throws ValidacaoException, EmpregadoNaoExisteException {
         Empregado eAntigo = getEmpregadoValido(id);
-        String salario = (novoSalario != null) ? novoSalario : eAntigo.getSalarioSemFormato();
+        String salario = (novoSalario != null && !novoSalario.isEmpty()) ? novoSalario : eAntigo.getSalarioSemFormato();
         Empregado eNovo;
-
         switch (novoTipo.toLowerCase()) {
-            case "horista" -> {
+            case "horista":
                 validarSalario(salario);
                 eNovo = new EmpregadoHorista(id, eAntigo.getNome(), eAntigo.getEndereco(), novoTipo, salario);
-            }
-            case "assalariado" -> {
+                break;
+            case "assalariado":
                 validarSalario(salario);
                 eNovo = new EmpregadoAssalariado(id, eAntigo.getNome(), eAntigo.getEndereco(), novoTipo, salario);
-            }
-            case "comissionado" -> {
+                break;
+            case "comissionado":
                 if (comissao == null) throw new ComissaoNulaException();
                 validarComissao(comissao);
                 eNovo = new EmpregadoComissionado(id, eAntigo.getNome(), eAntigo.getEndereco(), novoTipo, salario, comissao);
-            }
-            default -> throw new TipoInvalidoException();
+                break;
+            default:
+                throw new TipoInvalidoException();
         }
         eNovo.setMembroSindicato(eAntigo.getMembroSindicato());
         eNovo.setMetodoPagamento(eAntigo.getMetodoPagamento());

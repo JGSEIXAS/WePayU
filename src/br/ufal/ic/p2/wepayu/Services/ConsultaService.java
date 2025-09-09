@@ -22,7 +22,6 @@ public class ConsultaService extends BaseService {
     public String getHorasNormaisTrabalhadas(String id, String dataInicialStr, String dataFinalStr) throws ValidacaoException, EmpregadoNaoExisteException {
         validarIntervaloDeDatas(dataInicialStr, dataFinalStr);
         EmpregadoHorista horista = (EmpregadoHorista) getEmpregadoValido(id, EmpregadoHorista.class);
-
         double horasNormaisTotal = 0.0;
         for (CartaoDePonto cartao : horista.getCartoesDePonto().values()) {
             if (isDataNoIntervalo(cartao.getData(), dataInicialStr, dataFinalStr)) {
@@ -35,7 +34,6 @@ public class ConsultaService extends BaseService {
     public String getHorasExtrasTrabalhadas(String id, String dataInicialStr, String dataFinalStr) throws ValidacaoException, EmpregadoNaoExisteException {
         validarIntervaloDeDatas(dataInicialStr, dataFinalStr);
         EmpregadoHorista horista = (EmpregadoHorista) getEmpregadoValido(id, EmpregadoHorista.class);
-
         double horasExtrasTotal = 0.0;
         for (CartaoDePonto cartao : horista.getCartoesDePonto().values()) {
             if (isDataNoIntervalo(cartao.getData(), dataInicialStr, dataFinalStr)) {
@@ -51,7 +49,6 @@ public class ConsultaService extends BaseService {
     public String getVendasRealizadas(String id, String dataInicialStr, String dataFinalStr) throws ValidacaoException, EmpregadoNaoExisteException {
         validarIntervaloDeDatas(dataInicialStr, dataFinalStr);
         EmpregadoComissionado comissionado = (EmpregadoComissionado) getEmpregadoValido(id, EmpregadoComissionado.class);
-
         double totalVendas = 0.0;
         for (ResultadoVenda venda : comissionado.getVendas().values()) {
             if (isDataNoIntervalo(venda.getData(), dataInicialStr, dataFinalStr)) {
@@ -64,12 +61,10 @@ public class ConsultaService extends BaseService {
     public String getTaxasServico(String id, String dataInicialStr, String dataFinalStr) throws ValidacaoException, EmpregadoNaoExisteException {
         validarIntervaloDeDatas(dataInicialStr, dataFinalStr);
         Empregado empregado = getEmpregadoValido(id);
-
         MembroSindicato membro = empregado.getMembroSindicato();
         if (membro == null) {
-            throw new ValidacaoException("Empregado nao eh sindicalizado.");
+            throw new EmpregadoNaoSindicalizadoException();
         }
-
         double totalTaxas = 0.0;
         for (TaxaServico taxa : membro.getTaxasDeServico().values()) {
             if (isDataNoIntervalo(taxa.getData(), dataInicialStr, dataFinalStr)) {
@@ -83,16 +78,14 @@ public class ConsultaService extends BaseService {
         LocalDate data = LocalDate.parse(dataStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
         LocalDate dataInicial = LocalDate.parse(dataInicialStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
         LocalDate dataFinal = LocalDate.parse(dataFinalStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
-        return !data.isBefore(dataInicial) && !data.isAfter(dataFinal);
+        return !data.isBefore(dataInicial) && data.isBefore(dataFinal);
     }
 
     private void validarIntervaloDeDatas(String dataInicialStr, String dataFinalStr) throws ValidacaoException {
         if (!isDataValida(dataInicialStr)) throw new DataInicialInvalidaException();
         if (!isDataValida(dataFinalStr)) throw new DataFinalInvalidaException();
-
         LocalDate dataInicial = LocalDate.parse(dataInicialStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
         LocalDate dataFinal = LocalDate.parse(dataFinalStr, DateTimeFormatter.ofPattern("d/M/yyyy"));
-
         if (dataInicial.isAfter(dataFinal)) throw new DataInicialPosteriorException();
     }
 
@@ -116,48 +109,25 @@ public class ConsultaService extends BaseService {
     }
 
     public double calcularSalarioBruto(Empregado empregado, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
-        String dataInicialStr = empregado.getDataUltimoPagamento().plusDays(1).format(formatter);
-        String dataFinalStr = dataFolha.plusDays(1).format(formatter);
-
-        if (empregado instanceof EmpregadoHorista h) {
-            double horasNormais = Double.parseDouble(getHorasNormaisTrabalhadas(h.getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
-            double horasExtras = Double.parseDouble(getHorasExtrasTrabalhadas(h.getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
-            double taxaHoraria = Double.parseDouble(h.getSalarioSemFormato().replace(',', '.'));
-            return truncate((horasNormais * taxaHoraria) + (horasExtras * taxaHoraria * 1.5));
-        }
-        if (empregado instanceof EmpregadoAssalariado) {
-            return Double.parseDouble(empregado.getSalarioSemFormato().replace(',', '.'));
-        }
-        if (empregado instanceof EmpregadoComissionado c) {
-            double salarioFixo = getSalarioFixoComissionado(c);
-            double vendas = Double.parseDouble(getVendasRealizadas(c.getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
-            double comissao = getComissaoSobreVendas(c, vendas);
-            return truncate(salarioFixo + comissao);
-        }
-        return 0;
+        return empregado.calcularSalarioBruto(dataFolha, this);
     }
 
     public double calcularDeducoes(Empregado empregado, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         if (!empregado.isSindicalizado() || calcularSalarioBruto(empregado, dataFolha) <= 0) {
             return 0;
         }
-
         MembroSindicato membro = empregado.getMembroSindicato();
         double taxaSindicalDiaria = membro.getTaxaSindical();
         double taxaSindicalTotal = 0;
-
         if (empregado instanceof EmpregadoAssalariado) {
             taxaSindicalTotal = taxaSindicalDiaria * dataFolha.lengthOfMonth();
         } else {
             long daysBetween = ChronoUnit.DAYS.between(empregado.getDataUltimoPagamento(), dataFolha);
             taxaSindicalTotal = daysBetween * taxaSindicalDiaria;
         }
-
         String dataInicialStr = empregado.getDataUltimoPagamento().plusDays(1).format(DateTimeFormatter.ofPattern("d/M/yyyy"));
         String dataFinalStr = dataFolha.plusDays(1).format(DateTimeFormatter.ofPattern("d/M/yyyy"));
         double taxasServicoTotal = Double.parseDouble(getTaxasServico(empregado.getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
-
         return truncate(taxaSindicalTotal + taxasServicoTotal);
     }
 
@@ -178,9 +148,7 @@ public class ConsultaService extends BaseService {
         if (empregado instanceof EmpregadoComissionado) {
             LocalDate dataContrato = empregado.getDataContratacao();
             LocalDate primeiroPagamento = dataContrato.with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
-
             if (dataFolha.isBefore(primeiroPagamento)) return false;
-
             long daysBetween = ChronoUnit.DAYS.between(primeiroPagamento, dataFolha);
             return daysBetween % 14 == 0 && dataFolha.getDayOfWeek() == DayOfWeek.FRIDAY;
         }

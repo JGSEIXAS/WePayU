@@ -1,6 +1,11 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import br.ufal.ic.p2.wepayu.Exception.EmpregadoNaoExisteException;
+import br.ufal.ic.p2.wepayu.Exception.ValidacaoException;
+import br.ufal.ic.p2.wepayu.Services.ConsultaService;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +22,20 @@ public class EmpregadoHorista extends Empregado implements Serializable {
         this.cartoesDePonto = new HashMap<>();
     }
 
+    @Override
+    public double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) throws ValidacaoException, EmpregadoNaoExisteException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+        String dataInicialStr = getDataUltimoPagamento().plusDays(1).format(formatter);
+        String dataFinalStr = dataFolha.plusDays(1).format(formatter);
+
+        double horasNormais = Double.parseDouble(consultaService.getHorasNormaisTrabalhadas(getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
+        double horasExtras = Double.parseDouble(consultaService.getHorasExtrasTrabalhadas(getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
+        double taxaHoraria = Double.parseDouble(getSalarioSemFormato().replace(',', '.'));
+
+        double salario = (horasNormais * taxaHoraria) + (horasExtras * taxaHoraria * 1.5);
+        return Math.floor((salario * 100) + 1e-9) / 100.0;
+    }
+
     public void lancaCartao(CartaoDePonto cartao) {
         this.cartoesDePonto.put(cartao.getData(), cartao);
     }
@@ -29,25 +48,18 @@ public class EmpregadoHorista extends Empregado implements Serializable {
         this.cartoesDePonto = cartoesDePonto;
     }
 
-    // Dentro da classe EmpregadoHorista
-
     @Override
     public Empregado clone() {
         EmpregadoHorista cloned = new EmpregadoHorista(this.getId(), this.getNome(), this.getEndereco(), this.getTipo(), this.getSalario());
         super.copy(cloned);
-
-        // --- Início da Cópia Profunda do Mapa de Cartões de Ponto ---
         Map<String, CartaoDePonto> newCartoesMap = new HashMap<>();
         if (this.cartoesDePonto != null) {
             for (Map.Entry<String, CartaoDePonto> entry : this.cartoesDePonto.entrySet()) {
                 CartaoDePonto originalCartao = entry.getValue();
-                // Cria nova instância de CartaoDePonto.
                 newCartoesMap.put(entry.getKey(), new CartaoDePonto(originalCartao.getData(), originalCartao.getHoras()));
             }
         }
         cloned.setCartoesDePonto(newCartoesMap);
-        // --- Fim da Cópia Profunda ---
-
         return cloned;
     }
 }
