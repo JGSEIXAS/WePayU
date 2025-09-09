@@ -6,14 +6,29 @@ import br.ufal.ic.p2.wepayu.models.EmpregadoComissionado;
 import br.ufal.ic.p2.wepayu.models.EmpregadoHorista;
 import br.ufal.ic.p2.wepayu.Repository.EmpregadoRepository;
 
-// Classe base abstrata para compartilhar o repositório e validações comuns
+/**
+ * Classe base abstrata para os serviços do sistema.
+ * Fornece acesso ao repositório de empregados e métodos de validação comuns
+ * que são compartilhados entre os diferentes serviços.
+ */
 public abstract class BaseService {
     protected final EmpregadoRepository repository;
 
+    /**
+     * Constrói uma instância de BaseService com o repositório de empregados.
+     * @param repository O repositório para acesso aos dados dos empregados.
+     */
     public BaseService(EmpregadoRepository repository) {
         this.repository = repository;
     }
 
+    /**
+     * Valida a existência de um empregado pelo ID.
+     * @param id O ID do empregado a ser validado.
+     * @return O objeto {@link Empregado} se encontrado.
+     * @throws IdentificacaoNulaException Se o ID for nulo ou vazio.
+     * @throws EmpregadoNaoExisteException Se nenhum empregado com o ID for encontrado.
+     */
     protected Empregado getEmpregadoValido(String id) throws ValidacaoException, EmpregadoNaoExisteException {
         if (id == null || id.isEmpty()) throw new IdentificacaoNulaException();
         Empregado e = repository.findById(id);
@@ -21,6 +36,14 @@ public abstract class BaseService {
         return e;
     }
 
+    /**
+     * Valida a existência e o tipo de um empregado.
+     * @param id O ID do empregado a ser validado.
+     * @param tipoEsperado A classe que representa o tipo esperado do empregado (ex: EmpregadoHorista.class).
+     * @return O objeto {@link Empregado} se encontrado e do tipo correto.
+     * @throws ValidacaoException Se o ID for nulo ou inválido.
+     * @throws EmpregadoNaoExisteException Se o empregado não for encontrado ou não for do tipo esperado.
+     */
     protected Empregado getEmpregadoValido(String id, Class<?> tipoEsperado) throws ValidacaoException, EmpregadoNaoExisteException {
         Empregado empregado = getEmpregadoValido(id);
         if (tipoEsperado == EmpregadoHorista.class && !(empregado instanceof EmpregadoHorista)) {
@@ -32,6 +55,11 @@ public abstract class BaseService {
         return empregado;
     }
 
+    /**
+     * Verifica se uma string de data está em um formato válido ("d/M/yyyy") e representa uma data real.
+     * @param dataStr A string da data a ser validada.
+     * @return {@code true} se a data for válida, {@code false} caso contrário.
+     */
     protected boolean isDataValida(String dataStr) {
         if (dataStr == null || !dataStr.matches("\\d{1,2}/\\d{1,2}/\\d{4}")) {
             return false;
@@ -47,6 +75,7 @@ public abstract class BaseService {
 
         int[] diasNoMes = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
+        // Verifica se é um ano bissexto
         if (ano % 400 == 0 || (ano % 4 == 0 && ano % 100 != 0)) {
             diasNoMes[2] = 29;
         }

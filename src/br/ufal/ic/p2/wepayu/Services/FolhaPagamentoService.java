@@ -14,33 +14,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável por orquestrar a geração da folha de pagamento.
+ * Calcula os salários, deduções e gera um arquivo de relatório formatado
+ * com os detalhes do pagamento para todos os empregados elegíveis em uma data específica.
+ */
 public class FolhaPagamentoService extends BaseService {
     private final ConsultaService consultaService;
     private final CommandHistoryService commandHistoryService;
 
-
+    /**
+     * Constrói uma instância de FolhaPagamentoService com as dependências necessárias.
+     * @param repository O repositório para acesso aos dados dos empregados.
+     * @param consultaService O serviço para realizar cálculos e consultas.
+     * @param commandHistoryService O serviço de histórico para undo/redo.
+     */
     public FolhaPagamentoService(EmpregadoRepository repository, ConsultaService consultaService, CommandHistoryService commandHistoryService) {
         super(repository);
         this.consultaService = consultaService;
         this.commandHistoryService = commandHistoryService;
     }
 
-
+    /**
+     * Executa o processo de geração da folha de pagamento para uma data específica.
+     * Gera um relatório em arquivo e atualiza a data do último pagamento dos empregados.
+     * Esta operação pode ser desfeita (undo).
+     * @param data A data para a qual a folha deve ser gerada (formato "d/M/yyyy").
+     * @param saida O caminho do arquivo onde o relatório de saída será salvo.
+     * @throws Exception Se ocorrer um erro durante a geração do arquivo ou cálculos.
+     */
     public void rodaFolha(String data, String saida) throws Exception {
-        // 1. Captura o estado do repositório ANTES de qualquer modificação.
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
-
-        // 2. Define a ação "desfazer" (undo), que restaura o estado anterior.
         Runnable undoAction = () -> repository.setState(estadoAnterior);
 
-        // 3. Define a ação principal (o "comando") que será executada.
         Runnable commandAction = () -> {
             try {
                 LocalDate dataFolha = LocalDate.parse(data, DateTimeFormatter.ofPattern("d/M/yyyy"));
-                // Importante: Buscamos os empregados DENTRO da ação para usar o estado atual.
                 List<Empregado> empregados = repository.findAll();
 
-                // A lógica de gerar o arquivo de saída permanece a mesma.
                 try (PrintWriter writer = new PrintWriter(new FileWriter(saida))) {
                     writer.println("FOLHA DE PAGAMENTO DO DIA " + dataFolha);
                     writer.println("====================================");
@@ -54,8 +65,6 @@ public class FolhaPagamentoService extends BaseService {
                     writer.printf("TOTAL FOLHA: %.2f\n", totalFolha);
                 }
 
-                // A lógica de atualizar a data do último pagamento também permanece.
-                // Esta é a principal modificação de estado que o "undo" reverterá.
                 for (Empregado empregado : empregados) {
                     if (consultaService.isDiaDePagar(empregado, dataFolha)) {
                         double salarioBruto = consultaService.calcularSalarioBruto(empregado, dataFolha);
@@ -66,15 +75,21 @@ public class FolhaPagamentoService extends BaseService {
                     }
                 }
             } catch (Exception e) {
-                // Envolvemos as exceções para que possam ser tratadas pelo commandHistoryService se necessário.
                 throw new RuntimeException(e);
             }
         };
-
-        // 4. Executa o comando e regista a ação de "desfazer" no histórico.
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Gera a seção do relatório de pagamento para os empregados horistas.
+     * @param writer O objeto PrintWriter para escrever no arquivo de saída.
+     * @param empregados A lista de todos os empregados do sistema.
+     * @param dataFolha A data de referência da folha de pagamento.
+     * @return O valor total bruto pago aos horistas.
+     * @throws ValidacaoException Se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException Se um empregado não for encontrado.
+     */
     private double gerarRelatorioHoristas(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         writer.println("===============================================================================================================================");
         writer.println("===================== HORISTAS ================================================================================================");
@@ -111,6 +126,15 @@ public class FolhaPagamentoService extends BaseService {
         return totalBruto;
     }
 
+    /**
+     * Gera a seção do relatório de pagamento para os empregados assalariados.
+     * @param writer O objeto PrintWriter para escrever no arquivo de saída.
+     * @param empregados A lista de todos os empregados do sistema.
+     * @param dataFolha A data de referência da folha de pagamento.
+     * @return O valor total bruto pago aos assalariados.
+     * @throws ValidacaoException Se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException Se um empregado não for encontrado.
+     */
     private double gerarRelatorioAssalariados(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         writer.println("===============================================================================================================================");
         writer.println("===================== ASSALARIADOS ============================================================================================");
@@ -140,6 +164,15 @@ public class FolhaPagamentoService extends BaseService {
         return totalBruto;
     }
 
+    /**
+     * Gera a seção do relatório de pagamento para os empregados comissionados.
+     * @param writer O objeto PrintWriter para escrever no arquivo de saída.
+     * @param empregados A lista de todos os empregados do sistema.
+     * @param dataFolha A data de referência da folha de pagamento.
+     * @return O valor total bruto pago aos comissionados.
+     * @throws ValidacaoException Se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException Se um empregado não for encontrado.
+     */
     private double gerarRelatorioComissionados(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         writer.println("===============================================================================================================================");
         writer.println("===================== COMISSIONADOS ===========================================================================================");
@@ -180,6 +213,14 @@ public class FolhaPagamentoService extends BaseService {
         return totalBruto;
     }
 
+    /**
+     * Formata uma única linha do relatório de pagamento para um empregado.
+     * @param e O empregado para o qual a linha será formatada.
+     * @param data A data de referência da folha de pagamento.
+     * @return Uma string formatada representando a linha do relatório.
+     * @throws ValidacaoException Se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException Se um empregado não for encontrado.
+     */
     private String formatarLinhaRelatorio(Empregado e, LocalDate data) throws ValidacaoException, EmpregadoNaoExisteException {
         double salarioBruto = consultaService.calcularSalarioBruto(e, data);
         double descontos = consultaService.calcularDeducoes(e, data);

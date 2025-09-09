@@ -7,14 +7,33 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+/**
+ * Serviço responsável por gerenciar a lógica de negócio de lançamentos no sistema,
+ * como cartões de ponto, resultados de vendas e taxas de serviço.
+ * Utiliza o Command Pattern para suportar a funcionalidade de undo/redo.
+ */
 public class LancamentoService extends BaseService {
     private final CommandHistoryService commandHistoryService;
 
+    /**
+     * Constrói uma instância de LancamentoService com as dependências necessárias.
+     * @param repository O repositório para acesso aos dados dos empregados.
+     * @param commandHistoryService O serviço de histórico de comandos para undo/redo.
+     */
     public LancamentoService(EmpregadoRepository repository, CommandHistoryService commandHistoryService) {
         super(repository);
         this.commandHistoryService = commandHistoryService;
     }
 
+    /**
+     * Lança um cartão de ponto para um empregado horista.
+     * Define a data de contratação se for o primeiro lançamento.
+     * @param id O ID do empregado horista.
+     * @param data A data do registro de ponto (formato "d/M/yyyy").
+     * @param horasStr As horas trabalhadas no dia.
+     * @throws ValidacaoException Se os dados de entrada forem inválidos (data, horas).
+     * @throws EmpregadoNaoExisteException Se o empregado não for encontrado ou não for horista.
+     */
     public void lancaCartao(String id, String data, String horasStr) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id, EmpregadoHorista.class);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -41,6 +60,14 @@ public class LancamentoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Lança um resultado de venda para um empregado comissionado.
+     * @param id O ID do empregado comissionado.
+     * @param data A data da venda (formato "d/M/yyyy").
+     * @param valorStr O valor da venda.
+     * @throws ValidacaoException Se os dados de entrada forem inválidos (data, valor).
+     * @throws EmpregadoNaoExisteException Se o empregado não for encontrado ou não for comissionado.
+     */
     public void lancaVenda(String id, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id, EmpregadoComissionado.class);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -62,6 +89,14 @@ public class LancamentoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Lança uma taxa de serviço para um membro do sindicato.
+     * @param idMembro O ID de membro do sindicato.
+     * @param data A data da cobrança da taxa (formato "d/M/yyyy").
+     * @param valorStr O valor da taxa de serviço.
+     * @throws ValidacaoException Se os dados de entrada forem inválidos.
+     * @throws EmpregadoNaoExisteException Se nenhum empregado corresponder ao ID de membro do sindicato.
+     */
     public void lancaTaxaServico(String idMembro, String data, String valorStr) throws ValidacaoException, EmpregadoNaoExisteException {
         if (idMembro == null || idMembro.isEmpty()) throw new MembroNuloException();
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -90,6 +125,12 @@ public class LancamentoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Valida se a string de horas é um número positivo.
+     * @param horasStr As horas em formato de String.
+     * @return O valor das horas em double.
+     * @throws ValidacaoException Se as horas não forem um número ou não forem positivas.
+     */
     private double validarHoras(String horasStr) throws ValidacaoException {
         try {
             double horas = Double.parseDouble(horasStr.replace(',', '.'));
@@ -100,6 +141,12 @@ public class LancamentoService extends BaseService {
         }
     }
 
+    /**
+     * Valida se a string de valor é um número positivo.
+     * @param valorStr O valor em formato de String.
+     * @return O valor em double.
+     * @throws ValidacaoException Se o valor não for um número ou não for positivo.
+     */
     private double validarValorPositivo(String valorStr) throws ValidacaoException {
         try {
             double valor = Double.parseDouble(valorStr.replace(',', '.'));

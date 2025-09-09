@@ -6,6 +6,11 @@ import br.ufal.ic.p2.wepayu.Services.ConsultaService;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+/**
+ * Classe abstrata que representa um Empregado.
+ * Serve como base para todos os tipos de empregados do sistema,
+ * definindo atributos e comportamentos comuns.
+ */
 public abstract class Empregado implements Serializable {
     private String id;
     private String nome;
@@ -17,9 +22,25 @@ public abstract class Empregado implements Serializable {
     private LocalDate dataContratacao;
     private LocalDate dataUltimoPagamento;
 
+    /**
+     * Construtor padrão para persistência.
+     */
     public Empregado() {}
+
+    /**
+     * Cria uma cópia profunda (clone) do objeto Empregado.
+     * @return Uma nova instância de {@link Empregado} com os mesmos dados.
+     */
     public abstract Empregado clone();
 
+    /**
+     * Constrói uma instância de Empregado com os dados básicos.
+     * @param id O ID único do empregado.
+     * @param nome O nome do empregado.
+     * @param endereco O endereço do empregado.
+     * @param tipo O tipo de empregado (horista, assalariado, comissionado).
+     * @param salario O salário base do empregado.
+     */
     public Empregado(String id, String nome, String endereco, String tipo, String salario) {
         this.id = id;
         this.nome = nome;
@@ -40,11 +61,18 @@ public abstract class Empregado implements Serializable {
                 : LocalDate.of(2004, 12, 31);
     }
 
-    // **CORREÇÃO ADICIONADA AQUI**
-    // Adiciona o método abstrato que estava faltando.
+    /**
+     * Método abstrato para calcular o salário bruto do empregado.
+     * A implementação é específica para cada tipo de empregado (Polimorfismo).
+     * @param dataFolha A data de referência para o cálculo.
+     * @param consultaService O serviço de consulta para obter dados adicionais.
+     * @return O valor do salário bruto.
+     * @throws ValidacaoException Se houver erro de validação.
+     * @throws EmpregadoNaoExisteException Se houver referência a um empregado inexistente.
+     */
     public abstract double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) throws ValidacaoException, EmpregadoNaoExisteException;
 
-    // Getters e Setters (permanecem os mesmos)
+    // Getters e Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getNome() { return nome; }
@@ -71,7 +99,9 @@ public abstract class Empregado implements Serializable {
     public void setDataUltimoPagamento(LocalDate dataUltimoPagamento) { this.dataUltimoPagamento = dataUltimoPagamento; }
 
     /**
-     * Garante a cópia profunda de todos os campos aninhados.
+     * Copia as propriedades deste empregado para uma instância clonada.
+     * Garante a cópia profunda de objetos aninhados.
+     * @param clone A instância de destino para a cópia.
      */
     protected void copy(Empregado clone) {
         clone.setId(this.id);
