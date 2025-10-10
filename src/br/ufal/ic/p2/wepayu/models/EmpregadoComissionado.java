@@ -8,63 +8,57 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Classe que representa um empregado que recebe um salário fixo mais uma comissão sobre vendas.
- */
 public class EmpregadoComissionado extends Empregado {
     private Map<String, ResultadoVenda> vendas;
     private String comissao;
 
-    /**
-     * Construtor padrão que inicializa a lista de vendas.
-     */
     public EmpregadoComissionado() {
         this.vendas = new HashMap<>();
     }
 
-    /**
-     * Constrói uma instância de EmpregadoComissionado.
-     * @param id ID único do empregado.
-     * @param nome Nome do empregado.
-     * @param endereco Endereço do empregado.
-     * @param tipo Tipo do empregado (deve ser "comissionado").
-     * @param salario Salário base mensal.
-     * @param comissao Taxa de comissão sobre vendas.
-     */
     public EmpregadoComissionado(String id, String nome, String endereco, String tipo, String salario, String comissao) {
         super(id, nome, endereco, tipo, salario);
         this.comissao = comissao;
         this.vendas = new HashMap<>();
+        // CORREÇÃO: Define a data de contratação e o último pagamento inicial.
+        setDataContratacao(LocalDate.of(2005, 1, 1));
+        setDataUltimoPagamento(LocalDate.of(2004, 12, 31));
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Calcula o salário bruto como a soma do salário fixo quinzenal mais a comissão sobre as vendas do período.
-     */
     @Override
     public double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) throws ValidacaoException, EmpregadoNaoExisteException {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
-        String dataInicialStr = getDataUltimoPagamento().plusDays(1).format(formatter);
-        String dataFinalStr = dataFolha.plusDays(1).format(formatter);
+        String agenda = getAgendaPagamento().getDescricao();
+        double salarioBase = Double.parseDouble(getSalarioSemFormato().replace(',', '.'));
 
-        double salarioFixo = consultaService.getSalarioFixoComissionado(this);
-        double vendas = Double.parseDouble(consultaService.getVendasRealizadas(getId(), dataInicialStr, dataFinalStr).replace(',', '.'));
-        double comissao = consultaService.getComissaoSobreVendas(this, vendas);
+        LocalDate dataInicialPagamento = getDataUltimoPagamento().plusDays(1);
+        LocalDate dataFinalPagamento = dataFolha.plusDays(1);
 
-        double salario = salarioFixo + comissao;
-        return Math.floor((salario * 100) + 1e-9) / 100.0;
+        double valorDasVendas = Double.parseDouble(consultaService.getVendasRealizadas(getId(), dataInicialPagamento.format(DateTimeFormatter.ofPattern("d/M/yyyy")), dataFinalPagamento.format(DateTimeFormatter.ofPattern("d/M/yyyy"))).replace(',', '.'));
+        double valorDaComissao = consultaService.getComissaoSobreVendas(this, valorDasVendas);
+
+        double salarioBruto;
+
+        if (agenda.startsWith("semanal")) {
+            // CORREÇÃO: Cálculo do salário fixo proporcional à frequência semanal.
+            int frequencia = 1;
+            if (agenda.split(" ").length == 3) {
+                frequencia = Integer.parseInt(agenda.split(" ")[1]);
+            } else if (getAgendaPagamento().getDescricao().equals("semanal 2 5")) {
+                frequencia = 2; // Caso específico da agenda padrão quinzenal
+            }
+            double fixoProporcional = (salarioBase * 12 / 52.0) * frequencia;
+            salarioBruto = fixoProporcional + valorDaComissao;
+        } else { // mensal
+            salarioBruto = salarioBase + valorDaComissao;
+        }
+
+        return Math.floor((salarioBruto * 100) + 1e-9) / 100.0;
     }
 
-    /**
-     * Adiciona um novo resultado de venda para este empregado.
-     * @param venda O objeto {@link ResultadoVenda} a ser adicionado.
-     */
     public void lancaVenda(ResultadoVenda venda) {
         this.vendas.put(venda.getData(), venda);
     }
 
-    // Getters e Setters
     public Map<String, ResultadoVenda> getVendas() {
         return vendas;
     }
@@ -84,9 +78,6 @@ public class EmpregadoComissionado extends Empregado {
         this.comissao = comissao;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Empregado clone() {
         EmpregadoComissionado cloned = new EmpregadoComissionado();

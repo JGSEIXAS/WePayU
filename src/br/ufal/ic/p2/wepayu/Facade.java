@@ -8,7 +8,6 @@ import br.ufal.ic.p2.wepayu.Services.*;
 
 public class Facade {
 
-    // --- DECLARAÇÕES DE SERVIÇOS E ESTADO ---
     private final EmpregadoRepository repository = new EmpregadoRepository();
     private final CommandHistoryService commandHistoryService = new CommandHistoryService();
     private final ConsultaService consultaService = new ConsultaService(repository);
@@ -25,7 +24,6 @@ public class Facade {
         }
     }
 
-    // --- MÉTODOS DE CONTROLO ---
     public void zerarSistema() throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
         sistemaService.zerarSistema();
@@ -38,7 +36,6 @@ public class Facade {
         }
     }
 
-    // --- GESTÃO DE EMPREGADOS ---
     public String criarEmpregado(String nome, String endereco, String tipo, String salario) throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
         return empregadoService.criarEmpregado(nome, endereco, tipo, salario);
@@ -49,12 +46,16 @@ public class Facade {
         return empregadoService.criarEmpregado(nome, endereco, tipo, salario, comissao);
     }
 
+    public void criarAgendaDePagamentos(String descricao) throws ValidacaoException {
+        verificarSistemaEncerrado();
+        empregadoService.criarAgendaDePagamentos(descricao);
+    }
+
     public void removerEmpregado(String emp) throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
         empregadoService.removerEmpregado(emp);
     }
 
-    // --- MÉTODOS 'alteraEmpregado' ---
     public void alteraEmpregado(String emp, String atributo, String valor) throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
         empregadoService.alteraEmpregado(emp, atributo, valor);
@@ -74,7 +75,6 @@ public class Facade {
         empregadoService.alteraEmpregado(emp, atributo, valor1, banco, agencia, contaCorrente);
     }
 
-    // --- CONSULTAS E LANÇAMENTOS ---
     public String getAtributoEmpregado(String emp, String atributo) throws ValidacaoException, EmpregadoNaoExisteException {
         verificarSistemaEncerrado();
         return empregadoService.getAtributoEmpregado(emp, atributo);
@@ -120,9 +120,9 @@ public class Facade {
         return consultaService.getTaxasServico(emp, dataInicial, dataFinal);
     }
 
-    // --- MÉTODOS DA FOLHA DE PAGAMENTO ---
     public String totalFolha(String data) throws Exception {
         verificarSistemaEncerrado();
+        // CORREÇÃO: Chamada direcionada para o ConsultaService
         return consultaService.totalFolha(data);
     }
 
@@ -131,7 +131,6 @@ public class Facade {
         folhaPagamentoService.rodaFolha(data, saida);
     }
 
-    // --- MÉTODOS DE UNDO/REDO E CONSULTA DE CONTAGEM ---
     public int getNumeroDeEmpregados() throws ValidacaoException {
         verificarSistemaEncerrado();
         return empregadoService.getNumeroDeEmpregados();
