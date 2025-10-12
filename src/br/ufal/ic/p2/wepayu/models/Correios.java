@@ -5,5 +5,5 @@ package br.ufal.ic.p2.wepayu.models;
  * Esta classe atua como um marcador de tipo e não possui atributos próprios.
  */
 public class Correios extends MetodoPagamento {
-    // A classe pode continuar vazia
+    // A classe pode ser vazia
 }

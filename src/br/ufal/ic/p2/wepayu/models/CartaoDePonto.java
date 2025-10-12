@@ -26,18 +26,34 @@ public class CartaoDePonto {
     }
 
     // Getters e Setters
+    /**
+     * Retorna a data do registro.
+     * @return A data do registro.
+     */
     public String getData() {
         return data;
     }
 
+    /**
+     * Retorna o total de horas trabalhadas.
+     * @return O total de horas.
+     */
     public Double getHoras() {
         return horas;
     }
 
+    /**
+     * Define a data do registro.
+     * @param data A nova data.
+     */
     public void setData(String data) {
         this.data = data;
     }
 
+    /**
+     * Define o total de horas trabalhadas.
+     * @param horas O novo total de horas.
+     */
     public void setHoras(Double horas) {
         this.horas = horas;
     }

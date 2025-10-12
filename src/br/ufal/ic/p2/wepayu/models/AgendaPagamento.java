@@ -6,24 +6,47 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Objects;
 
+/**
+ * Representa a agenda de pagamento de um empregado, definindo a frequência e o dia do pagamento.
+ */
 public class AgendaPagamento {
 
     private String descricao;
 
+    /**
+     * Construtor padrão.
+     */
     public AgendaPagamento() {}
 
+    /**
+     * Constrói uma AgendaPagamento com uma descrição.
+     * @param descricao A descrição da agenda (ex: "semanal 5", "mensal $").
+     */
     public AgendaPagamento(String descricao) {
         this.descricao = descricao;
     }
 
+    /**
+     * Retorna a descrição da agenda.
+     * @return A descrição da agenda.
+     */
     public String getDescricao() {
         return descricao;
     }
 
+    /**
+     * Define a descrição da agenda.
+     * @param descricao A nova descrição.
+     */
     public void setDescricao(String descricao) {
         this.descricao = descricao;
     }
 
+    /**
+     * Verifica se uma data específica é um dia de pagamento de acordo com esta agenda.
+     * @param data A data a ser verificada.
+     * @return {@code true} se for um dia de pagamento, {@code false} caso contrário.
+     */
     public boolean isDiaDePagamento(LocalDate data) { // LÓGICA ATUALIZADA
         String[] parts = descricao.split(" ");
         String tipo = parts[0];
@@ -68,6 +91,10 @@ public class AgendaPagamento {
         return false;
     }
 
+    /**
+     * Clona o objeto AgendaPagamento.
+     * @return Uma nova instância de {@link AgendaPagamento} com a mesma descrição.
+     */
     @Override
     public AgendaPagamento clone() {
         return new AgendaPagamento(this.descricao);

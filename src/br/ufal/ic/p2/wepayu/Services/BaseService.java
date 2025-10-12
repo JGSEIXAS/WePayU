@@ -12,6 +12,9 @@ import br.ufal.ic.p2.wepayu.Repository.EmpregadoRepository;
  * que são compartilhados entre os diferentes serviços.
  */
 public abstract class BaseService {
+    /**
+     * Repositório de empregados para acesso aos dados.
+     */
     protected final EmpregadoRepository repository;
 
     /**
@@ -26,7 +29,7 @@ public abstract class BaseService {
      * Valida a existência de um empregado pelo ID.
      * @param id O ID do empregado a ser validado.
      * @return O objeto {@link Empregado} se encontrado.
-     * @throws IdentificacaoNulaException Se o ID for nulo ou vazio.
+     * @throws ValidacaoException Se o ID for nulo ou vazio.
      * @throws EmpregadoNaoExisteException Se nenhum empregado com o ID for encontrado.
      */
     protected Empregado getEmpregadoValido(String id) throws ValidacaoException, EmpregadoNaoExisteException {

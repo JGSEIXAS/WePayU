@@ -10,11 +10,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Arrays;
 
+/**
+ * Serviço responsável pela lógica de negócio relacionada a empregados.
+ * Inclui criação, remoção, alteração e consulta de dados de empregados.
+ */
 public class EmpregadoService extends BaseService {
     private final CommandHistoryService commandHistoryService;
     // CORREÇÃO: A lista agora não é final para permitir o reset.
     private static List<String> agendasDisponiveis = new ArrayList<>(Arrays.asList("semanal 5", "mensal $", "semanal 2 5"));
 
+    /**
+     * Constrói uma instância de EmpregadoService.
+     * @param repository O repositório para acesso aos dados.
+     * @param commandHistoryService O serviço de histórico de comandos.
+     */
     public EmpregadoService(EmpregadoRepository repository, CommandHistoryService commandHistoryService) {
         super(repository);
         this.commandHistoryService = commandHistoryService;
@@ -29,6 +38,16 @@ public class EmpregadoService extends BaseService {
     }
 
     // ... (resto do código da classe permanece o mesmo) ...
+    /**
+     * Cria um novo empregado (horista ou assalariado).
+     * @param nome Nome do empregado.
+     * @param endereco Endereço do empregado.
+     * @param tipo Tipo do empregado.
+     * @param salario Salário ou valor da hora.
+     * @return O ID do novo empregado.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se ocorrer um erro inesperado.
+     */
     public String criarEmpregado(String nome, String endereco, String tipo, String salario) throws ValidacaoException, EmpregadoNaoExisteException {
         validarCamposBase(nome, endereco, salario);
         if ("comissionado".equals(tipo)) throw new TipoNaoAplicavelException();
@@ -42,6 +61,17 @@ public class EmpregadoService extends BaseService {
         return id;
     }
 
+    /**
+     * Cria um novo empregado comissionado.
+     * @param nome Nome do empregado.
+     * @param endereco Endereço do empregado.
+     * @param tipo Tipo do empregado (deve ser "comissionado").
+     * @param salario Salário base.
+     * @param comissao Taxa de comissão.
+     * @return O ID do novo empregado.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se ocorrer um erro inesperado.
+     */
     public String criarEmpregado(String nome, String endereco, String tipo, String salario, String comissao) throws ValidacaoException, EmpregadoNaoExisteException {
         validarCamposBase(nome, endereco, salario);
         validarComissao(comissao);
@@ -55,6 +85,11 @@ public class EmpregadoService extends BaseService {
         return id;
     }
 
+    /**
+     * Cria uma nova agenda de pagamentos.
+     * @param descricao A descrição da agenda a ser criada.
+     * @throws ValidacaoException se a descrição for inválida ou a agenda já existir.
+     */
     public void criarAgendaDePagamentos(String descricao) throws ValidacaoException {
         String[] parts = descricao.split(" ");
         if (parts.length < 1 || parts.length > 3) throw new AgendaInvalidaException();
@@ -91,6 +126,12 @@ public class EmpregadoService extends BaseService {
         agendasDisponiveis.add(descricao);
     }
 
+    /**
+     * Remove um empregado do sistema.
+     * @param id O ID do empregado a ser removido.
+     * @throws ValidacaoException se o ID for inválido.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     public void removerEmpregado(String id) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -99,6 +140,14 @@ public class EmpregadoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Altera um atributo de um empregado.
+     * @param id O ID do empregado.
+     * @param atributo O atributo a ser alterado.
+     * @param valor O novo valor do atributo.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     public void alteraEmpregado(String id, String atributo, String valor) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -154,6 +203,17 @@ public class EmpregadoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Altera o método de pagamento de um empregado para banco.
+     * @param id O ID do empregado.
+     * @param atributo O atributo (deve ser "metodoPagamento").
+     * @param valor O valor (deve ser "banco").
+     * @param banco O nome do banco.
+     * @param agencia O número da agência.
+     * @param contaCorrente O número da conta corrente.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     public void alteraEmpregado(String id, String atributo, String valor, String banco, String agencia, String contaCorrente) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -176,6 +236,16 @@ public class EmpregadoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Altera o status de sindicalização de um empregado.
+     * @param id O ID do empregado.
+     * @param atributo O atributo (deve ser "sindicalizado").
+     * @param status O novo status de sindicalização.
+     * @param idSindicato O ID do sindicato.
+     * @param taxaSindical A taxa sindical.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     public void alteraEmpregado(String id, String atributo, boolean status, String idSindicato, String taxaSindical) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -210,6 +280,15 @@ public class EmpregadoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Altera o tipo de um empregado.
+     * @param id O ID do empregado.
+     * @param atributo O atributo (deve ser "tipo").
+     * @param tipo O novo tipo do empregado.
+     * @param comissaoOuSalario A nova comissão ou salário.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     public void alteraEmpregado(String id, String atributo, String tipo, String comissaoOuSalario) throws ValidacaoException, EmpregadoNaoExisteException {
         getEmpregadoValido(id);
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
@@ -229,6 +308,14 @@ public class EmpregadoService extends BaseService {
         commandHistoryService.execute(commandAction, undoAction);
     }
 
+    /**
+     * Obtém o valor de um atributo de um empregado.
+     * @param id O ID do empregado.
+     * @param atributo O atributo a ser consultado.
+     * @return O valor do atributo.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     public String getAtributoEmpregado(String id, String atributo) throws ValidacaoException, EmpregadoNaoExisteException {
         Empregado empregado = getEmpregadoValido(id);
         return switch (atributo.toLowerCase()) {
@@ -275,7 +362,14 @@ public class EmpregadoService extends BaseService {
         };
     }
 
-    public String getEmpregadoPorNome(String nome, int indice) throws EmpregadoNaoExisteException, EmpregadoNaoEncontradoException {
+    /**
+     * Busca um empregado pelo nome e índice.
+     * @param nome O nome do empregado.
+     * @param indice O índice (para casos de nomes duplicados).
+     * @return O ID do empregado encontrado.
+     * @throws EmpregadoNaoEncontradoException se o empregado não for encontrado.
+     */
+    public String getEmpregadoPorNome(String nome, int indice) throws EmpregadoNaoEncontradoException {
         List<Empregado> empregadosEncontrados = new ArrayList<>();
         for (Empregado e : repository.findAll()) {
             if (e.getNome().equals(nome)) {
@@ -289,10 +383,23 @@ public class EmpregadoService extends BaseService {
         return empregadosEncontrados.get(index).getId();
     }
 
+    /**
+     * Retorna o número total de empregados.
+     * @return O número de empregados.
+     */
     public int getNumeroDeEmpregados() {
         return repository.findAll().size();
     }
 
+    /**
+     * Altera o tipo de um empregado.
+     * @param id O ID do empregado.
+     * @param novoTipo O novo tipo.
+     * @param comissao A nova comissão (se aplicável).
+     * @param novoSalario O novo salário.
+     * @throws ValidacaoException se os dados forem inválidos.
+     * @throws EmpregadoNaoExisteException se o empregado não for encontrado.
+     */
     private void alterarTipo(String id, String novoTipo, String comissao, String novoSalario) throws ValidacaoException, EmpregadoNaoExisteException {
         Empregado eAntigo = getEmpregadoValido(id);
         String salario = (novoSalario != null && !novoSalario.isEmpty()) ? novoSalario : eAntigo.getSalarioSemFormato();
@@ -319,12 +426,24 @@ public class EmpregadoService extends BaseService {
         repository.save(eNovo);
     }
 
+    /**
+     * Valida os campos base de um empregado.
+     * @param n Nome.
+     * @param e Endereço.
+     * @param s Salário.
+     * @throws ValidacaoException se algum campo for inválido.
+     */
     private void validarCamposBase(String n, String e, String s) throws ValidacaoException {
         if (n == null || n.isEmpty()) throw new NomeNuloException();
         if (e == null || e.isEmpty()) throw new EnderecoNuloException();
         validarSalario(s);
     }
 
+    /**
+     * Valida o salário.
+     * @param s Salário.
+     * @throws ValidacaoException se o salário for inválido.
+     */
     private void validarSalario(String s) throws ValidacaoException {
         if (s == null || s.isEmpty()) throw new SalarioNuloException();
         try {
@@ -334,6 +453,11 @@ public class EmpregadoService extends BaseService {
         }
     }
 
+    /**
+     * Valida a comissão.
+     * @param comissao A comissão.
+     * @throws ValidacaoException se a comissão for inválida.
+     */
     private void validarComissao(String comissao) throws ValidacaoException {
         if (comissao == null || comissao.isEmpty()) throw new ComissaoNulaException();
         try {

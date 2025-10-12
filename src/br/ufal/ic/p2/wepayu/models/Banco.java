@@ -36,10 +36,34 @@ public class Banco extends MetodoPagamento {
     }
 
     // Getters e Setters
+    /**
+     * Retorna o nome do banco.
+     * @return O nome do banco.
+     */
     public String getBanco() { return banco; }
+    /**
+     * Define o nome do banco.
+     * @param banco O novo nome do banco.
+     */
     public void setBanco(String banco) { this.banco = banco; }
+    /**
+     * Retorna o número da agência.
+     * @return O número da agência.
+     */
     public String getAgencia() { return agencia; }
+    /**
+     * Define o número da agência.
+     * @param agencia O novo número da agência.
+     */
     public void setAgencia(String agencia) { this.agencia = agencia; }
+    /**
+     * Retorna o número da conta corrente.
+     * @return O número da conta corrente.
+     */
     public String getContaCorrente() { return contaCorrente; }
+    /**
+     * Define o número da conta corrente.
+     * @param contaCorrente O novo número da conta corrente.
+     */
     public void setContaCorrente(String contaCorrente) { this.contaCorrente = contaCorrente; }
 }

@@ -33,18 +33,34 @@ public class ResultadoVenda {
     }
 
     // Getters e Setters
+    /**
+     * Retorna a data da venda.
+     * @return A data da venda.
+     */
     public String getData() {
         return data;
     }
 
+    /**
+     * Retorna o valor da venda.
+     * @return O valor da venda.
+     */
     public double getValor() {
         return valor;
     }
 
+    /**
+     * Define a data da venda.
+     * @param data A nova data da venda.
+     */
     public void setData(String data) {
         this.data = data;
     }
 
+    /**
+     * Define o valor da venda.
+     * @param valor O novo valor da venda.
+     */
     public void setValor(double valor) {
         this.valor = valor;
     }

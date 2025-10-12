@@ -8,14 +8,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Representa um empregado comissionado, que recebe um salário fixo mais uma comissão sobre as vendas.
+ */
 public class EmpregadoComissionado extends Empregado {
     private Map<String, ResultadoVenda> vendas;
     private String comissao;
 
+    /**
+     * Construtor padrão que inicializa a lista de vendas.
+     */
     public EmpregadoComissionado() {
         this.vendas = new HashMap<>();
     }
 
+    /**
+     * Constrói uma instância de EmpregadoComissionado.
+     * @param id ID único do empregado.
+     * @param nome Nome do empregado.
+     * @param endereco Endereço do empregado.
+     * @param tipo Tipo do empregado (deve ser "comissionado").
+     * @param salario Salário base.
+     * @param comissao Taxa de comissão.
+     */
     public EmpregadoComissionado(String id, String nome, String endereco, String tipo, String salario, String comissao) {
         super(id, nome, endereco, tipo, salario);
         this.comissao = comissao;
@@ -25,6 +40,11 @@ public class EmpregadoComissionado extends Empregado {
         setDataUltimoPagamento(LocalDate.of(2004, 12, 31));
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Calcula o salário bruto com base no salário fixo proporcional e na comissão sobre as vendas do período.
+     */
     @Override
     public double calcularSalarioBruto(LocalDate dataFolha, ConsultaService consultaService) throws ValidacaoException, EmpregadoNaoExisteException {
         String agenda = getAgendaPagamento().getDescricao();
@@ -55,18 +75,34 @@ public class EmpregadoComissionado extends Empregado {
         return Math.floor((salarioBruto * 100) + 1e-9) / 100.0;
     }
 
+    /**
+     * Adiciona um novo resultado de venda para este empregado.
+     * @param venda O objeto {@link ResultadoVenda} a ser adicionado.
+     */
     public void lancaVenda(ResultadoVenda venda) {
         this.vendas.put(venda.getData(), venda);
     }
 
+    /**
+     * Retorna o mapa de resultados de venda.
+     * @return O mapa de vendas.
+     */
     public Map<String, ResultadoVenda> getVendas() {
         return vendas;
     }
 
+    /**
+     * Define o mapa de resultados de venda.
+     * @param vendas O novo mapa de vendas.
+     */
     public void setVendas(Map<String, ResultadoVenda> vendas) {
         this.vendas = vendas;
     }
 
+    /**
+     * Retorna a taxa de comissão formatada.
+     * @return A taxa de comissão como string.
+     */
     public String getComissao() {
         if (this.comissao == null) return "0,00";
         String comissaoParaParse = this.comissao.replace(',', '.');
@@ -74,10 +110,17 @@ public class EmpregadoComissionado extends Empregado {
         return String.format("%.2f", valorNumerico).replace('.', ',');
     }
 
+    /**
+     * Define a taxa de comissão.
+     * @param comissao A nova taxa de comissão.
+     */
     public void setComissao(String comissao) {
         this.comissao = comissao;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Empregado clone() {
         EmpregadoComissionado cloned = new EmpregadoComissionado();

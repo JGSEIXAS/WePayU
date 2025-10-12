@@ -14,10 +14,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pela lógica de negócio da folha de pagamento.
+ * Inclui o cálculo do total da folha e a geração de relatórios de pagamento.
+ */
 public class FolhaPagamentoService extends BaseService {
     private final ConsultaService consultaService;
     private final CommandHistoryService commandHistoryService;
 
+    /**
+     * Constrói uma instância de FolhaPagamentoService.
+     * @param repository O repositório para acesso aos dados.
+     * @param consultaService O serviço de consulta.
+     * @param commandHistoryService O serviço de histórico de comandos.
+     */
     public FolhaPagamentoService(EmpregadoRepository repository, ConsultaService consultaService, CommandHistoryService commandHistoryService) {
         super(repository);
         this.consultaService = consultaService;
@@ -27,6 +37,9 @@ public class FolhaPagamentoService extends BaseService {
     /**
      * CORREÇÃO: totalFolha agora é um comando que altera o estado, simulando um pagamento.
      * Isso é necessário para passar no us9.txt e us10.txt.
+     * @param data A data para cálculo do total da folha.
+     * @return O valor total da folha formatado como string.
+     * @throws Exception se ocorrer um erro durante o cálculo.
      */
     public String totalFolha(String data) throws Exception {
         final double[] total = {0.0};
@@ -61,7 +74,12 @@ public class FolhaPagamentoService extends BaseService {
         return String.format("%.2f", total[0]).replace('.', ',');
     }
 
-
+    /**
+     * Roda a folha de pagamento para uma data específica e gera um arquivo de saída.
+     * @param data A data para processamento da folha.
+     * @param saida O nome do arquivo de saída a ser gerado.
+     * @throws Exception se ocorrer um erro durante o processamento.
+     */
     public void rodaFolha(String data, String saida) throws Exception {
         Map.Entry<Map<String, Empregado>, Integer> estadoAnterior = repository.getState();
         Runnable undoAction = () -> repository.setState(estadoAnterior);
@@ -104,6 +122,15 @@ public class FolhaPagamentoService extends BaseService {
     }
 
     // ... O resto da classe continua o mesmo, sem alterações.
+    /**
+     * Gera o relatório de pagamento para empregados horistas.
+     * @param writer O PrintWriter para escrever o relatório.
+     * @param empregados A lista de todos os empregados.
+     * @param dataFolha A data da folha de pagamento.
+     * @return O valor total bruto pago aos horistas.
+     * @throws ValidacaoException se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException se um empregado não for encontrado.
+     */
     private double gerarRelatorioHoristas(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         writer.println("===============================================================================================================================");
         writer.println("===================== HORISTAS ================================================================================================");
@@ -149,6 +176,15 @@ public class FolhaPagamentoService extends BaseService {
         return totalBruto;
     }
 
+    /**
+     * Gera o relatório de pagamento para empregados assalariados.
+     * @param writer O PrintWriter para escrever o relatório.
+     * @param empregados A lista de todos os empregados.
+     * @param dataFolha A data da folha de pagamento.
+     * @return O valor total bruto pago aos assalariados.
+     * @throws ValidacaoException se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException se um empregado não for encontrado.
+     */
     private double gerarRelatorioAssalariados(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         writer.println("===============================================================================================================================");
         writer.println("===================== ASSALARIADOS ============================================================================================");
@@ -178,6 +214,15 @@ public class FolhaPagamentoService extends BaseService {
         return totalBruto;
     }
 
+    /**
+     * Gera o relatório de pagamento para empregados comissionados.
+     * @param writer O PrintWriter para escrever o relatório.
+     * @param empregados A lista de todos os empregados.
+     * @param dataFolha A data da folha de pagamento.
+     * @return O valor total bruto pago aos comissionados.
+     * @throws ValidacaoException se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException se um empregado não for encontrado.
+     */
     private double gerarRelatorioComissionados(PrintWriter writer, List<Empregado> empregados, LocalDate dataFolha) throws ValidacaoException, EmpregadoNaoExisteException {
         writer.println("===============================================================================================================================");
         writer.println("===================== COMISSIONADOS ===========================================================================================");
@@ -218,6 +263,14 @@ public class FolhaPagamentoService extends BaseService {
         return totalBruto;
     }
 
+    /**
+     * Formata uma linha do relatório de pagamento para um empregado.
+     * @param e O empregado.
+     * @param data A data da folha de pagamento.
+     * @return A linha formatada do relatório.
+     * @throws ValidacaoException se ocorrer um erro de validação.
+     * @throws EmpregadoNaoExisteException se um empregado não for encontrado.
+     */
     private String formatarLinhaRelatorio(Empregado e, LocalDate data) throws ValidacaoException, EmpregadoNaoExisteException {
         double salarioBruto = consultaService.calcularSalarioBruto(e, data);
         double descontos = consultaService.calcularDeducoes(e, data);

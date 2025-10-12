@@ -53,10 +53,34 @@ public class MembroSindicato {
     }
 
     // Getters e Setters
+    /**
+     * Retorna o ID do membro do sindicato.
+     * @return O ID do membro.
+     */
     public String getIdMembro() { return idMembro; }
+    /**
+     * Define o ID do membro do sindicato.
+     * @param idMembro O novo ID do membro.
+     */
     public void setIdMembro(String idMembro) { this.idMembro = idMembro; }
+    /**
+     * Retorna a taxa sindical.
+     * @return A taxa sindical.
+     */
     public double getTaxaSindical() { return taxaSindical; }
+    /**
+     * Define a taxa sindical.
+     * @param taxaSindical A nova taxa sindical.
+     */
     public void setTaxaSindical(double taxaSindical) { this.taxaSindical = taxaSindical; }
+    /**
+     * Retorna o mapa de taxas de serviço.
+     * @return O mapa de taxas de serviço.
+     */
     public Map<String, TaxaServico> getTaxasDeServico() { return taxasDeServico; }
+    /**
+     * Define o mapa de taxas de serviço.
+     * @param taxasDeServico O novo mapa de taxas de serviço.
+     */
     public void setTaxasDeServico(Map<String, TaxaServico> taxasDeServico) { this.taxasDeServico = taxasDeServico; }
 }

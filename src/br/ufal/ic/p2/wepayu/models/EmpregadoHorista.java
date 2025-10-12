@@ -66,10 +66,18 @@ public class EmpregadoHorista extends Empregado implements Serializable {
     }
 
     // Getters e Setters
+    /**
+     * Retorna o mapa de cartões de ponto.
+     * @return O mapa de cartões de ponto.
+     */
     public Map<String, CartaoDePonto> getCartoesDePonto() {
         return this.cartoesDePonto;
     }
 
+    /**
+     * Define o mapa de cartões de ponto.
+     * @param cartoesDePonto O novo mapa de cartões de ponto.
+     */
     public void setCartoesDePonto(Map<String, CartaoDePonto> cartoesDePonto) {
         this.cartoesDePonto = cartoesDePonto;
     }
